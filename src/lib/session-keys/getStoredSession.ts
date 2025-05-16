@@ -44,7 +44,10 @@ export const getStoredSession = async (
   createSessionAsync: (params: {
     session: SessionConfig;
   }) => Promise<{ transactionHash?: `0x${string}`; session: SessionConfig }>
-): Promise<object | null> => {
+): Promise<{
+  session: SessionConfig;
+  privateKey: Address;
+} | null> => {
   console.log("Getting stored session for address:", address);
   if (!address) return null;
 
@@ -56,7 +59,10 @@ export const getStoredSession = async (
   try {
     const key = await getEncryptionKey(address);
     const decryptedData = await decrypt(encryptedData, key);
-    const parsedData = JSON.parse(decryptedData);
+    const parsedData = JSON.parse(decryptedData) as {
+      session: SessionConfig;
+      privateKey: Address;
+    };
     // IF DEFAULT_CALL_POLICIES have changed we return null
     if (
       JSON.stringify(parsedData.session.callPolicies, (_, value) =>

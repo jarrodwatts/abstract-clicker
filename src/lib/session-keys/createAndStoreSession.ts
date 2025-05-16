@@ -7,6 +7,7 @@ import {
 import { LOCAL_STORAGE_KEY_PREFIX } from "./constants";
 import { getEncryptionKey } from "./getEncryptionKey";
 import { encrypt } from "./encryptSession";
+import { COOKIE_CLICKER_CONTRACT_ADDRESS } from "@/const/contracts";
 
 /**
  * Default call policies for session keys
@@ -14,8 +15,8 @@ import { encrypt } from "./encryptSession";
  */
 export const DEFAULT_CALL_POLICIES = [
   {
-    target: "0xC4822AbB9F05646A9Ce44EFa6dDcda0Bf45595AA" as `0x${string}`, // NFT contract
-    selector: toFunctionSelector("mint(address,uint256)"),
+    target: COOKIE_CLICKER_CONTRACT_ADDRESS as `0x${string}`, // NFT contract
+    selector: toFunctionSelector("click()"),
     valueLimit: {
       limitType: LimitType.Unlimited,
       limit: BigInt(0),

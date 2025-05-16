@@ -6,6 +6,7 @@ import AnimationPreview from "./AnimationPreview";
 import { useEffect, useState } from "react";
 import generateRandomCharacter from "@/lib/render-character/generateRandomCharacter";
 import Character from "@/types/Character";
+import ClickerGame from "./ClickerGame";
 
 export default function LoginFlow() {
   const { address, isConnecting, isReconnecting } = useAccount();
@@ -33,7 +34,7 @@ export default function LoginFlow() {
     }
   }, [address]);
 
-  console.log({ address, hasValidSession, isSessionLoading });
+  console.log(isConnecting, isReconnecting, isSessionLoading);
 
   // Loading states - show walking animation
   if (isConnecting || isReconnecting || isSessionLoading) {
@@ -85,5 +86,5 @@ export default function LoginFlow() {
     );
   }
 
-  return null;
+  return <ClickerGame />;
 }
