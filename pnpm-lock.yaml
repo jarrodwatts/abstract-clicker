@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@abstract-foundation/agw-client':
-        specifier: ^1.6.3
-        version: 1.6.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3))
+        specifier: ^1.7.3
+        version: 1.7.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3))
       '@abstract-foundation/agw-react':
-        specifier: ^1.6.6
-        version: 1.6.6(808daf8603f6cbfea384baf8cee66aa8)
+        specifier: ^1.7.3
+        version: 1.7.3(39fd75961dd043f1e56598933deae857)
       '@radix-ui/react-slot':
         specifier: ^1.2.0
         version: 1.2.0(@types/react@19.1.2)(react@19.1.0)
@@ -81,8 +81,8 @@ importers:
 
 packages:
 
-  '@abstract-foundation/agw-client@1.6.3':
-    resolution: {integrity: sha512-pnQqs9zLBv2dwWW90B3DJLEQ+wvbN4g6tILBAr9GTdeANZfedC1VAh9iuYskqP+KYIJr9/J1KPdLjbBKNgqnlg==}
+  '@abstract-foundation/agw-client@1.7.3':
+    resolution: {integrity: sha512-AEDqdlG3o9+54Mq5WAv51tkRH6WsHHD6acJY98EqSkL94L9ov3XExi9ashrjabwxR1cNn0s/86kc63P4VnNFAw==}
     peerDependencies:
       abitype: ^1.0.0
       typescript: '>=5.0.4'
@@ -91,8 +91,8 @@ packages:
       typescript:
         optional: true
 
-  '@abstract-foundation/agw-react@1.6.6':
-    resolution: {integrity: sha512-+k5A0VgAKz3Wtz28xOEgXRosJnox3mOmfzD/kYZqE92nFTUCrJ0jLZmM0svEJBBCZeKsTB86zdhrOx4YcH3NPg==}
+  '@abstract-foundation/agw-react@1.7.3':
+    resolution: {integrity: sha512-gduaB7QeL+blT4u69s0qGArKRUIE52h/w4utXEyAKYDzidm+dKws2eBSQKd0IiNk3w3vprlrSpTS93bQnkveqw==}
     peerDependencies:
       '@privy-io/cross-app-connect': ^0.2.1
       '@privy-io/react-auth': ^2.8.2
@@ -3609,18 +3609,18 @@ packages:
 
 snapshots:
 
-  '@abstract-foundation/agw-client@1.6.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3))':
+  '@abstract-foundation/agw-client@1.7.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3))':
     dependencies:
       abitype: 1.0.8(typescript@5.8.3)(zod@3.24.3)
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3)
     optionalDependencies:
       typescript: 5.8.3
 
-  '@abstract-foundation/agw-react@1.6.6(808daf8603f6cbfea384baf8cee66aa8)':
+  '@abstract-foundation/agw-react@1.7.3(39fd75961dd043f1e56598933deae857)':
     dependencies:
-      '@abstract-foundation/agw-client': 1.6.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3))
+      '@abstract-foundation/agw-client': 1.7.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3))
       '@privy-io/cross-app-connect': 0.2.1(@wagmi/core@2.17.0(@tanstack/query-core@5.74.7)(@types/react@19.1.2)(react@19.1.0)(typescript@5.8.3)(use-sync-external-store@1.4.0(react@19.1.0))(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3)))(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3))
-      '@privy-io/react-auth': 2.12.0(@abstract-foundation/agw-client@1.6.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.3)(utf-8-validate@5.0.10))(@types/react@19.1.2)(bs58@6.0.0)(bufferutil@4.0.9)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)(use-sync-external-store@1.4.0(react@19.1.0))(utf-8-validate@5.0.10)(zod@3.24.3)
+      '@privy-io/react-auth': 2.12.0(@abstract-foundation/agw-client@1.7.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.3)(utf-8-validate@5.0.10))(@types/react@19.1.2)(bs58@6.0.0)(bufferutil@4.0.9)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)(use-sync-external-store@1.4.0(react@19.1.0))(utf-8-validate@5.0.10)(zod@3.24.3)
       '@tanstack/react-query': 5.74.7(react@19.1.0)
       react: 19.1.0
       secp256k1: 5.0.1
@@ -4453,7 +4453,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@privy-io/react-auth@2.12.0(@abstract-foundation/agw-client@1.6.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.3)(utf-8-validate@5.0.10))(@types/react@19.1.2)(bs58@6.0.0)(bufferutil@4.0.9)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)(use-sync-external-store@1.4.0(react@19.1.0))(utf-8-validate@5.0.10)(zod@3.24.3)':
+  '@privy-io/react-auth@2.12.0(@abstract-foundation/agw-client@1.7.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3)))(@solana/web3.js@1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.3)(utf-8-validate@5.0.10))(@types/react@19.1.2)(bs58@6.0.0)(bufferutil@4.0.9)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@5.8.3)(use-sync-external-store@1.4.0(react@19.1.0))(utf-8-validate@5.0.10)(zod@3.24.3)':
     dependencies:
       '@coinbase/wallet-sdk': 4.3.0
       '@floating-ui/react': 0.26.28(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -4495,7 +4495,7 @@ snapshots:
       viem: 2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3)
       zustand: 5.0.3(@types/react@19.1.2)(react@19.1.0)(use-sync-external-store@1.4.0(react@19.1.0))
     optionalDependencies:
-      '@abstract-foundation/agw-client': 1.6.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3))
+      '@abstract-foundation/agw-client': 1.7.3(abitype@1.0.8(typescript@5.8.3)(zod@3.24.3))(typescript@5.8.3)(viem@2.28.0(bufferutil@4.0.9)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.3))
       '@solana/web3.js': 1.98.2(bufferutil@4.0.9)(encoding@0.1.13)(typescript@5.8.3)(utf-8-validate@5.0.10)
     transitivePeerDependencies:
       - '@azure/app-configuration'

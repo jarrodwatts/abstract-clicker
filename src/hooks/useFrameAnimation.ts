@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import actions from "@/const/actions";
 
 // Animation speed in milliseconds
-export const ANIMATION_SPEED_MS = 80;
+export const ANIMATION_SPEED_MS = 70;
 
 /**
  * Custom hook to handle animation frame cycling

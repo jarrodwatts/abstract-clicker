@@ -8,7 +8,7 @@ import { getEncryptionKey } from "./getEncryptionKey";
 import { decrypt } from "./decryptSession";
 import { validateSession } from "./validateSession";
 import type { Address } from "viem";
-import { DEFAULT_CALL_POLICIES } from "@/config/session-key-config";
+import { DEFAULT_CALL_POLICIES } from "@/const/session-key-config";
 
 /**chain,
  * @function getStoredSession

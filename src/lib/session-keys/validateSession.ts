@@ -2,7 +2,7 @@ import { clearStoredSession } from "./clearStoredSession";
 import { abstractTestnet } from "viem/chains";
 import type { AbstractClient } from "@abstract-foundation/agw-client";
 import type { Address } from "viem";
-import { chain } from "@/config/chain";
+import { chain } from "@/const/chain";
 
 /**
  * @function validateSession
