@@ -16,7 +16,7 @@ export default function Home() {
         if (!ctx) return;
 
         // Render an Apple Tree scaled up to 100x100
-        await renderNatureTile(ctx, "Gold", 0, 0, 100, 100);
+        await renderNatureTile(ctx, "Apple Tree", 0, 0, 100, 100);
       } catch (error) {
         console.error("Failed to render nature tiles", error);
       }
@@ -28,12 +28,7 @@ export default function Home() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#87944d]">
       <h1 className="text-2xl font-bold mb-6">Mining Clicker Game</h1>
-      <canvas
-        ref={canvasRef}
-        width={100}
-        height={100}
-        className="border border-gray-800 mb-6"
-      />
+      <canvas ref={canvasRef} width={100} height={100} />
       <LoginFlow />
     </main>
   );

@@ -172,6 +172,7 @@ export function getNatureTilePosition(category: NatureCategory, index: number) {
     const itemCol = index % itemsPerRow;
 
     x = itemCol * TILE_SIZE;
+    // Add a 1px adjustment to prevent overlap with items above
     // Start at 64px (after trees) + category offset + item's row within category
     y = 64 + categoryIndex * TILE_SIZE + itemRow * TILE_SIZE;
   }
@@ -218,12 +219,13 @@ export function drawNatureTile(
   width: number = natureTile.width,
   height: number = natureTile.height
 ) {
+  // Skip the first pixel row to avoid showing pixels from the item above
   ctx.drawImage(
     image,
     natureTile.x,
-    natureTile.y,
+    natureTile.y + 1, // Add 1px to y-coordinate to skip the top row
     natureTile.width,
-    natureTile.height,
+    natureTile.height - 1, // Reduce height by 1px to maintain proportions
     x,
     y,
     width,
