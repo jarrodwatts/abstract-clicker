@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from "react";
 import LoginFlow from "@/components/LoginFlow";
-import { NatureCategory, renderNatureTile } from "@/utils/natureImages";
+import { renderNatureTile } from "@/utils/natureImages";
+import AnimationPreview from "@/components/AnimationPreview";
+import generateRandomCharacter from "@/lib/render-character/generateRandomCharacter";
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,7 +30,21 @@ export default function Home() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen p-4 bg-[#87944d]">
       <h1 className="text-2xl font-bold mb-6">Mining Clicker Game</h1>
-      <canvas ref={canvasRef} width={100} height={100} />
+
+      <div className="flex flex-row">
+        <AnimationPreview
+          action={"axe"}
+          character={generateRandomCharacter()}
+          isAnimating={true}
+          canvasSize={100}
+        />
+        <canvas
+          ref={canvasRef}
+          width={100}
+          height={100}
+          className="-ml-14 z-10"
+        />
+      </div>
       <LoginFlow />
     </main>
   );

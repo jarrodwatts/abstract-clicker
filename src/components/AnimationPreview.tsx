@@ -14,6 +14,7 @@ interface AnimationCanvasProps {
   action: keyof typeof actions;
   direction?: keyof typeof directions;
   isAnimating?: boolean;
+  canvasSize?: number;
 }
 
 const AnimationPreview: React.FC<AnimationCanvasProps> = ({
@@ -21,6 +22,7 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
   action,
   direction = "right",
   isAnimating = false,
+  canvasSize = CANVAS_SIZE,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -70,11 +72,9 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
   return (
     <canvas
       ref={canvasRef}
-      width={CANVAS_SIZE}
-      height={CANVAS_SIZE}
-      style={{
-        borderRadius: 8,
-      }}
+      width={canvasSize}
+      height={canvasSize}
+      className="z-20"
     />
   );
 };

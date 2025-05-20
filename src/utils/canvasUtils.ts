@@ -5,8 +5,6 @@ import directions from "@/types/Direction";
 
 // Canvas sizing constants
 export const CANVAS_SIZE = 256;
-export const SPRITE_SCALE = 0.9; // 90% of canvas size
-export const CLIP_SCALE = 0.85; // 85% of canvas size
 
 /**
  * Draw character layers on the canvas
@@ -24,7 +22,7 @@ export function drawCharacterLayers(
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   // Apply clipping to prevent adjacent frames from showing
-  const clipSize = Math.min(canvas.width, canvas.height) * CLIP_SCALE;
+  const clipSize = Math.min(canvas.width, canvas.height);
   const clipX = (canvas.width - clipSize) / 2;
   const clipY = (canvas.height - clipSize) / 2;
 
@@ -61,17 +59,17 @@ export function drawCharacterLayers(
     const spriteY = directionIndex * frameSize.y;
 
     // Center the sprite in the canvas
-    const drawSize = canvas.width * SPRITE_SCALE;
+    const drawSize = canvas.width;
     const drawX = (canvas.width - drawSize) / 2;
     const drawY = (canvas.height - drawSize) / 2;
 
     ctx.drawImage(
       image,
-      // Source coordinates
-      spriteX,
-      spriteY,
-      frameSize.x,
-      frameSize.y,
+      // Source coordinates - adjust to skip border pixels
+      spriteX + 1, // Skip leftmost 1px column
+      spriteY + 1, // Skip top 1px row
+      frameSize.x - 1, // Reduce width by 2px (1px from each side)
+      frameSize.y - 1, // Reduce height by 1px (from top)
       // Destination coordinates
       drawX,
       drawY,

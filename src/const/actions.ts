@@ -7,7 +7,20 @@ const actions = {
     animationFrameLength: 5,
     frameSize: {
       x: 32,
-      y: 33,
+      y: 32,
+      xSpace: 0,
+      ySpace: 0,
+    },
+  },
+  axe: {
+    name: "axe",
+    actionName: "axing",
+    path: `axe`,
+    suffix: "axe",
+    animationFrameLength: 5,
+    frameSize: {
+      x: 32,
+      y: 32,
       xSpace: 0,
       ySpace: 0,
     },
