@@ -7,11 +7,10 @@ import { LOCAL_STORAGE_KEY_PREFIX } from "./constants";
 import { getEncryptionKey } from "./getEncryptionKey";
 import { decrypt } from "./decryptSession";
 import { validateSession } from "./validateSession";
-import { SupportedChain } from "@/const/chain";
 import type { Address } from "viem";
-import { DEFAULT_CALL_POLICIES } from "./createAndStoreSession";
+import { DEFAULT_CALL_POLICIES } from "@/config/session-key-config";
 
-/**
+/**chain,
  * @function getStoredSession
  * @description Retrieves, decrypts, and validates a stored session for a wallet address
  *
@@ -26,8 +25,6 @@ import { DEFAULT_CALL_POLICIES } from "./createAndStoreSession";
  * cleared and a new session will be created.
  *
  * @param {Address} address - The wallet address whose session should be retrieved
- * @param {SupportedChain} chain - The blockchain configuration to use for validation
- * @param {(params: { session: SessionConfig }) => Promise<{ transactionHash?: `0x${string}`; session: SessionConfig }>} createSessionAsync - The function to create a new session
  *
  * @returns {Promise<Object|null>} A promise that resolves to:
  *   - The session data object (containing `session` and `privateKey`) if successful
@@ -39,14 +36,10 @@ import { DEFAULT_CALL_POLICIES } from "./createAndStoreSession";
  */
 export const getStoredSession = async (
   abstractClient: AbstractClient,
-  address: Address,
-  chain: SupportedChain,
-  createSessionAsync: (params: {
-    session: SessionConfig;
-  }) => Promise<{ transactionHash?: `0x${string}`; session: SessionConfig }>
+  address: Address
 ): Promise<{
   session: SessionConfig;
-  privateKey: Address;
+  privateKey: `0x${string}`;
 } | null> => {
   console.log("Getting stored session for address:", address);
   if (!address) return null;
@@ -59,10 +52,13 @@ export const getStoredSession = async (
   try {
     const key = await getEncryptionKey(address);
     const decryptedData = await decrypt(encryptedData, key);
-    const parsedData = JSON.parse(decryptedData) as {
-      session: SessionConfig;
-      privateKey: Address;
-    };
+    const parsedData = JSON.parse(decryptedData, (key, value) => {
+      // Check if the value is a string that looks like a number (only digits)
+      if (typeof value === "string" && /^\d+$/.test(value)) {
+        return BigInt(value);
+      }
+      return value;
+    });
     // IF DEFAULT_CALL_POLICIES have changed we return null
     if (
       JSON.stringify(parsedData.session.callPolicies, (_, value) =>
@@ -76,17 +72,7 @@ export const getStoredSession = async (
     }
 
     const sessionHash = getSessionHash(parsedData.session);
-
-    const isValid = await validateSession(
-      abstractClient,
-      address,
-      sessionHash,
-      chain,
-      createSessionAsync
-    );
-
-    if (!isValid) return null;
-
+    await validateSession(abstractClient, address, sessionHash);
     return parsedData;
   } catch (error) {
     console.error("Failed to decrypt session:", error);

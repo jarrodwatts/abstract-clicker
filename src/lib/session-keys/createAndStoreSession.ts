@@ -1,31 +1,11 @@
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import { Address, parseEther, toFunctionSelector } from "viem";
-import {
-  LimitType,
-  SessionConfig,
-} from "@abstract-foundation/agw-client/sessions";
+import { Address } from "viem";
+import { SessionConfig } from "@abstract-foundation/agw-client/sessions";
 import { LOCAL_STORAGE_KEY_PREFIX } from "./constants";
 import { getEncryptionKey } from "./getEncryptionKey";
 import { encrypt } from "./encryptSession";
-import { COOKIE_CLICKER_CONTRACT_ADDRESS } from "@/const/contracts";
-
-/**
- * Default call policies for session keys
- * Defines which contract functions the session key can call and with what limits
- */
-export const DEFAULT_CALL_POLICIES = [
-  {
-    target: COOKIE_CLICKER_CONTRACT_ADDRESS as `0x${string}`, // NFT contract
-    selector: toFunctionSelector("click()"),
-    valueLimit: {
-      limitType: LimitType.Unlimited,
-      limit: BigInt(0),
-      period: BigInt(0),
-    },
-    maxValuePerUse: BigInt(0),
-    constraints: [],
-  },
-];
+import { SESSION_KEY_CONFIG } from "@/const/session-key-config";
+import { AbstractClient } from "@abstract-foundation/agw-client";
 
 /**
  * @function createAndStoreSession
@@ -45,8 +25,6 @@ export const DEFAULT_CALL_POLICIES = [
  * 30 days before expiring.
  *
  * @param {Address} userAddress - The wallet address that will own the session
- * @param {(params: { session: SessionConfig }) => Promise<{ transactionHash?: `0x${string}`; session: SessionConfig }>} createSessionAsync - The createSessionAsync function from useCreateSession hook
- * @param {SupportedChain} chain - The blockchain configuration to use (determines which factory address to use)
  *
  * @returns {Promise<Object|null>} A promise that resolves to:
  *   - The created session data object (containing `session` and `privateKey`) if successful
@@ -55,10 +33,8 @@ export const DEFAULT_CALL_POLICIES = [
  * @throws {Error} Throws "Session creation failed" if there's an error during session creation
  */
 export const createAndStoreSession = async (
-  userAddress: Address,
-  createSessionAsync: (params: {
-    session: SessionConfig;
-  }) => Promise<{ transactionHash?: `0x${string}`; session: SessionConfig }>
+  abstractClient: AbstractClient,
+  userAddress: Address
 ): Promise<{
   session: SessionConfig;
   privateKey: Address;
@@ -70,17 +46,10 @@ export const createAndStoreSession = async (
     const sessionPrivateKey = generatePrivateKey();
     const sessionSigner = privateKeyToAccount(sessionPrivateKey);
 
-    const { session } = await createSessionAsync({
+    const { session } = await abstractClient.createSession({
       session: {
         signer: sessionSigner.address,
-        expiresAt: BigInt(Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30),
-        feeLimit: {
-          limitType: LimitType.Lifetime,
-          limit: parseEther("1"),
-          period: BigInt(0),
-        },
-        callPolicies: DEFAULT_CALL_POLICIES,
-        transferPolicies: [],
+        ...SESSION_KEY_CONFIG,
       },
     });
 

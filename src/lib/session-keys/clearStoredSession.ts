@@ -1,5 +1,7 @@
+import { queryClient } from "@/components/AbstractWalletProvider";
 import { LOCAL_STORAGE_KEY_PREFIX, ENCRYPTION_KEY_PREFIX } from "./constants";
 import type { Address } from "viem";
+import { QUERY_KEYS } from "@/const/query-keys";
 
 /**
  * @function clearStoredSession
@@ -17,6 +19,12 @@ import type { Address } from "viem";
  * @param {Address} userAddress - The wallet address whose session data should be cleared
  */
 export const clearStoredSession = (userAddress: Address) => {
+  console.log("Clearing session for address:", userAddress);
   localStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}${userAddress}`);
   localStorage.removeItem(`${ENCRYPTION_KEY_PREFIX}${userAddress}`);
+
+  // Clear the query cache
+  queryClient.invalidateQueries({
+    queryKey: [QUERY_KEYS.session, userAddress],
+  });
 };

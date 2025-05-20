@@ -1,10 +1,8 @@
 import { clearStoredSession } from "./clearStoredSession";
-import { createAndStoreSession } from "./createAndStoreSession";
-import { SupportedChain } from "@/const/chain";
 import { abstractTestnet } from "viem/chains";
 import type { AbstractClient } from "@abstract-foundation/agw-client";
 import type { Address } from "viem";
-import type { SessionConfig } from "@abstract-foundation/agw-client/sessions";
+import { chain } from "@/config/chain";
 
 /**
  * @function validateSession
@@ -13,7 +11,7 @@ import type { SessionConfig } from "@abstract-foundation/agw-client/sessions";
  * This function verifies whether a session is still valid (active) by calling the
  * sessionStatus function on the Abstract Global Wallet session validator contract.
  * If the session is found to be invalid (expired, closed, or non-existent), it
- * automatically cleans up the invalid session data and attempts to create a new session.
+ * automatically cleans up the invalid session data.
  *
  * The validation is performed on-chain by checking the status of the session hash
  * for the given wallet address. The status is mapped to the SessionStatus enum,
@@ -21,7 +19,6 @@ import type { SessionConfig } from "@abstract-foundation/agw-client/sessions";
  *
  * @param {Address} address - The wallet address that owns the session
  * @param {string} sessionHash - The hash of the session to validate
- * @param {SupportedChain} chain - The blockchain configuration to use for validation
  * @param {(params: { session: SessionConfig }) => Promise<{ transactionHash?: `0x${string}`; session: SessionConfig }>} createSessionAsync - The function to create a new session
  *
  * @returns {Promise<boolean>} A promise that resolves to a boolean indicating whether
@@ -30,14 +27,12 @@ import type { SessionConfig } from "@abstract-foundation/agw-client/sessions";
 export const validateSession = async (
   abstractClient: AbstractClient,
   address: Address,
-  sessionHash: `0x${string}`,
-  chain: SupportedChain,
-  createSessionAsync: (params: {
-    session: SessionConfig;
-  }) => Promise<{ transactionHash?: `0x${string}`; session: SessionConfig }>
+  sessionHash: `0x${string}`
 ): Promise<boolean> => {
   try {
     const status = await abstractClient.getSessionStatus(sessionHash);
+
+    console.log("Session status:", status);
 
     // On Abstract testnet, any session is allowed, so we skip the check
     // However, on mainnet, we need to check if the session is both whitelisted and active.
@@ -46,6 +41,7 @@ export const validateSession = async (
       (chain === abstractTestnet && status === SessionStatus.NotInitialized);
 
     if (!isValid) {
+      console.log("Invalid session, clearing stored session");
       clearStoredSession(address);
     }
 
