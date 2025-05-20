@@ -15,17 +15,8 @@ export default function Home() {
         const ctx = canvasRef.current.getContext("2d");
         if (!ctx) return;
 
-        // Render tiles with a single function call
-        await renderNatureTile(ctx, "Soapstone", 0, 0);
-        await renderNatureTile(ctx, "Soapstone", 0, 16);
-        await renderNatureTile(ctx, "Soapstone", 0, 32);
-        await renderNatureTile(ctx, "Soapstone", 0, 48);
-        await renderNatureTile(ctx, "Soapstone", 0, 64);
-        await renderNatureTile(ctx, "Soapstone", 0, 80);
-
-        await renderNatureTile(ctx, "Apple Tree", 16, 0);
-        await renderNatureTile(ctx, "Pear Tree", 16, 32);
-        await renderNatureTile(ctx, "Birch Tree", 16, 64);
+        // Render an Apple Tree scaled up to 100x100
+        await renderNatureTile(ctx, "Gold", 0, 0, 100, 100);
       } catch (error) {
         console.error("Failed to render nature tiles", error);
       }
@@ -41,7 +32,7 @@ export default function Home() {
         ref={canvasRef}
         width={100}
         height={100}
-        className="border border-black"
+        className="border border-gray-800 mb-6"
       />
       <LoginFlow />
     </main>
