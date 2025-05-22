@@ -15,6 +15,7 @@ interface AnimationCanvasProps {
   direction?: keyof typeof directions;
   isAnimating?: boolean;
   canvasSize?: number;
+  clickCount?: number;
 }
 
 const AnimationPreview: React.FC<AnimationCanvasProps> = ({
@@ -23,6 +24,7 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
   direction = "right",
   isAnimating = false,
   canvasSize = CANVAS_SIZE,
+  clickCount = 0,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -48,7 +50,12 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
     getFilePathForLayer
   );
 
-  const animationFrame = useFrameAnimation(action, isAnimating, isLoading);
+  const animationFrame = useFrameAnimation(
+    action,
+    isAnimating,
+    isLoading,
+    clickCount
+  );
 
   // Draw the animation frame on the canvas
   useEffect(() => {

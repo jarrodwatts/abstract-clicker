@@ -22,6 +22,7 @@ export default function MiningGame({
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [clickCount, setClickCount] = useState(0);
   const [character] = useState(
     () => initialCharacter || generateRandomCharacter()
   );
@@ -46,10 +47,17 @@ export default function MiningGame({
   }, []);
 
   const handleCanvasClick = () => {
+    // Increment click counter for animation speed scaling
+    setClickCount((prev) => prev + 1);
+
     setIsAnimating(true);
 
     submitOptimisticTransaction();
     nonceQuery.incrementNonce();
+
+    // Play wood.wav audio
+    const audio = new Audio("/wood-break.mp3");
+    audio.play();
 
     // Clear any existing timeout
     if (timeoutRef.current) {
@@ -98,6 +106,7 @@ export default function MiningGame({
           character={character}
           isAnimating={isAnimating}
           canvasSize={240}
+          clickCount={clickCount}
         />
         <canvas
           ref={canvasRef}
