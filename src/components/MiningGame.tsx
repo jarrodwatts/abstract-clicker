@@ -628,7 +628,7 @@ export default function MiningGame({
             </div>
           </div>
           <div
-            className={`${styles.gameFrameThin} min-h-[480px] p-5 flex flex-col justify-start w-full`}
+            className={`${styles.gameFrameThin} h-[478px] p-5 flex flex-col justify-start w-full`}
           >
             {/* Transaction Feed Header and List */}
             <h3 className="text-lg font-semibold mb-4 text-[#5a4a1a]">
