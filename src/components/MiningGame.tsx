@@ -526,7 +526,7 @@ export default function MiningGame({
             </div>
             <div className="max-h-[200px] min-h-[200px] overflow-y-auto hide-scrollbar">
               <AnimatedList>
-                {transactions.slice(0, 5).map((tx) => (
+                {transactions.map((tx) => (
                   <a
                     key={tx.hash}
                     href={`${chain.blockExplorers?.default.url}/tx/${tx.hash}`}
