@@ -240,7 +240,7 @@ export default function MiningGame({
     setLeaves((prevLeaves) => [...prevLeaves, ...newLeaves]);
   };
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Increment click counter for animation speed scaling
     setClickCount((prev) => prev + 1);
     setIsAnimating(true);
@@ -299,23 +299,25 @@ export default function MiningGame({
 
   return (
     <>
-      <div className="flex flex-row">
+      <div
+        className="flex flex-row outline outline-red-500 cursor-pointer"
+        onClick={handleCanvasClick}
+      >
         <AnimationPreview
           action={"axe"}
           character={character}
           isAnimating={isAnimating}
-          canvasSize={240}
-          drawWidth={240}
-          drawHeight={240}
+          canvasSize={280}
+          drawWidth={280}
+          drawHeight={280}
           clickCount={clickCount}
-          style={{ width: "240px", height: "240px" }}
+          style={{ width: "280px", height: "280px" }}
         />
         <canvas
           ref={canvasRef}
           width={320}
           height={320}
-          className="-ml-15 z-10 cursor-pointer"
-          onClick={handleCanvasClick}
+          className="-ml-42 z-10"
         />
       </div>
     </>
