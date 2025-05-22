@@ -8,7 +8,6 @@ import { useAbstractSession } from "@/hooks/useAbstractSession";
 import { useCreateAbstractSession } from "@/hooks/useCreateAbstractSession";
 import AnimationPreview from "./AnimationPreview";
 import MiningGame from "./MiningGame";
-import { Button } from "./ui/button";
 
 export default function LoginFlow() {
   // Generate a random character on component mount
