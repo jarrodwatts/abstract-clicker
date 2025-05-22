@@ -56,7 +56,7 @@ export default function MiningGame({
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [character] = useState(
+  const [character, setCharacter] = useState(
     () => initialCharacter || generateRandomCharacter()
   );
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -354,51 +354,29 @@ export default function MiningGame({
         {/* Left column: three stacked boxes (order-2 on mobile) */}
         <div className="flex flex-col gap-4 w-full md:w-1/2 order-2 md:order-none">
           <div
-            className={`${styles.gameFrameThin} min-h-[72px] flex items-center gap-4 p-5 w-full`}
+            className={`${styles.gameFrameThin} min-h-[72px] flex flex-row items-center gap-4 p-5 w-full`}
           >
             <Image
               src="/abs.svg"
               alt="Abstract Wallet"
-              width={40}
+              width={36}
               height={36}
-              style={{ flexShrink: 0 }}
-            />
-            <div
+              className="flex-shrink-0"
               style={{
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-                minWidth: 0,
+                filter: "invert(0) brightness(0)",
               }}
-            >
-              <span
-                style={{
-                  fontWeight: 700,
-                  color: "#5a4a1a",
-                  fontSize: 18,
-                  lineHeight: 1,
-                }}
-              >
+            />
+            <div className="flex flex-col flex-1 min-w-0 justify-center">
+              <span className="font-bold text-[#5a4a1a] text-lg leading-none mb-1">
                 Your Abstract Global Wallet
               </span>
-              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span className="flex items-center gap-1.5">
                 {address ? (
                   <a
                     href={`${chain.blockExplorers?.default.url}/address/${address}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      color: "#5a4a1a",
-                      opacity: 0.85,
-                      textDecoration: "underline",
-                      transition: "opacity 0.2s",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      maxWidth: 220,
-                    }}
+                    className="inline-flex items-center text-[#5a4a1a] opacity-85 underline transition-opacity duration-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-[220px] hover:opacity-100"
                     title="View on abscan.org"
                   >
                     {`${address.slice(0, 6)}...${address.slice(-4)}`}
@@ -408,7 +386,7 @@ export default function MiningGame({
                       viewBox="0 0 16 16"
                       fill="none"
                       xmlns="http://www.w3.org/2000/svg"
-                      style={{ marginLeft: 4, opacity: 0.7 }}
+                      className="ml-1 opacity-70"
                     >
                       <path
                         d="M5 11L11 5"
@@ -432,7 +410,7 @@ export default function MiningGame({
             </div>
           </div>
           <div
-            className={`${styles.gameFrameThin} min-h-[72px] flex items-center gap-4 p-5 w-full`}
+            className={`${styles.gameFrameThin} min-h-[72px] flex flex-row items-center gap-4 p-5 w-full`}
           >
             <svg
               width="36"
@@ -440,50 +418,35 @@ export default function MiningGame({
               viewBox="0 0 36 36"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              style={{ flexShrink: 0 }}
+              className="flex-shrink-0"
             >
-              <rect x="6" y="14" width="24" height="8" rx="2" fill="#a86b2d" />
-              <rect
-                x="10"
-                y="10"
-                width="16"
-                height="16"
-                rx="2"
+              {/* Trunk */}
+              <rect x="16" y="27" width="4" height="6" rx="1" fill="#a86b2d" />
+              {/* Tree layers */}
+              <polygon
+                points="18,5 8,20 28,20"
+                fill="#bfc98a"
+                stroke="#a86b2d"
+                strokeWidth="2"
+              />
+              <polygon
+                points="18,11 12,22 24,22"
+                fill="#bfc98a"
+                stroke="#a86b2d"
+                strokeWidth="2"
+              />
+              <polygon
+                points="18,17 15,25 21,25"
                 fill="#bfc98a"
                 stroke="#a86b2d"
                 strokeWidth="2"
               />
             </svg>
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              <span
-                style={{
-                  fontWeight: 700,
-                  color: "#5a4a1a",
-                  fontSize: 18,
-                  lineHeight: 1,
-                }}
-              >
+            <div className="flex flex-col flex-1 min-w-0 justify-center gap-1">
+              <span className="font-bold text-[#5a4a1a] text-lg leading-none">
                 You&rsquo;ve Clicked
               </span>
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "flex-end",
-                  gap: 4,
-                  color: "#5a4a1a",
-                  fontSize: 16,
-                  opacity: 0.85,
-                  marginTop: 2,
-                  minWidth: 60,
-                }}
-              >
+              <span className="flex items-end gap-1 text-[#5a4a1a] text-base opacity-85 mt-0.5 min-w-[60px]">
                 {isClicksLoading ? (
                   "Loading..."
                 ) : (
@@ -493,14 +456,7 @@ export default function MiningGame({
                       decimalPlaces={0}
                       className="text-2xl font-bold"
                     />
-                    <span
-                      style={{
-                        fontSize: 12,
-                        color: "#5a4a1a",
-                        opacity: 0.6,
-                        lineHeight: "1",
-                      }}
-                    >
+                    <span className="text-xs text-[#5a4a1a] opacity-60 mb-1 leading-none">
                       times
                     </span>
                   </>

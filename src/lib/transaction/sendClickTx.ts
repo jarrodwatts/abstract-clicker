@@ -95,7 +95,6 @@ export default async function signClickTx(
 
   // @ts-expect-error - TODO: fix this
   const signature = await sessionClient.signTransaction(preparedTransaction);
-
   // 6. Send the raw transaction
   const response = await sendRawTransactionWithDetailedOutput(signature);
 

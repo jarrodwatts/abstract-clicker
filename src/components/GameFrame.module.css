@@ -5,7 +5,6 @@
   box-shadow: 12px 16px 32px 0 rgba(80, 40, 10, 0.35);
   padding: 32px;
   position: relative;
-  display: inline-block;
 }
 
 .gameFrameThin {
@@ -15,5 +14,4 @@
   box-shadow: 12px 16px 32px 0 rgba(80, 40, 10, 0.35);
   padding: 32px;
   position: relative;
-  display: inline-block;
 } 

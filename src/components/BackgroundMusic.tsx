@@ -40,7 +40,7 @@ export default function BackgroundMusic() {
   return (
     <button
       onClick={togglePlay}
-      className="fixed bottom-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors"
+      className="fixed bottom-4 right-4 z-50 bg-black/50 hover:bg-black/70 text-white rounded-full p-2 transition-colors cursor-pointer hover:cursor-pointer"
       title={isPlaying ? "Pause music" : "Play music"}
     >
       <svg

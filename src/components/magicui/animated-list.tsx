@@ -1,39 +1,22 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "motion/react";
-import React, {
-  ComponentPropsWithoutRef,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, { ComponentPropsWithoutRef, useMemo } from "react";
 
 export function AnimatedListItem({ children }: { children: React.ReactNode }) {
-  const animations = {
-    initial: { scale: 0, opacity: 0 },
-    animate: { scale: 1, opacity: 1, originY: 0 },
-    exit: { scale: 0, opacity: 0 },
-    transition: { type: "spring", stiffness: 350, damping: 40 },
-  };
-
-  return (
-    <motion.div {...animations} layout className="mx-auto w-full">
-      {children}
-    </motion.div>
-  );
+  return <div className="animate-list-item mx-auto w-full">{children}</div>;
 }
 
 export interface AnimatedListProps extends ComponentPropsWithoutRef<"div"> {
   children: React.ReactNode;
-  delay?: number;
+  maxItems?: number;
 }
 
 export const AnimatedList = React.memo(
-  ({ children, className, ...props }: AnimatedListProps) => {
+  ({ children, className, maxItems = 10, ...props }: AnimatedListProps) => {
     const childrenArray = useMemo(
-      () => React.Children.toArray(children),
-      [children]
+      () => React.Children.toArray(children).slice(0, maxItems),
+      [children, maxItems]
     );
 
     return (
@@ -41,16 +24,39 @@ export const AnimatedList = React.memo(
         className={cn(`flex flex-col items-center gap-4`, className)}
         {...props}
       >
-        <AnimatePresence>
-          {childrenArray.map((item) => (
-            <AnimatedListItem key={(item as React.ReactElement).key}>
-              {item}
-            </AnimatedListItem>
-          ))}
-        </AnimatePresence>
+        {childrenArray.map((item) => (
+          <AnimatedListItem key={(item as React.ReactElement).key}>
+            {item}
+          </AnimatedListItem>
+        ))}
       </div>
     );
   }
 );
 
 AnimatedList.displayName = "AnimatedList";
+
+// Add the CSS animations
+const styles = `
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-list-item {
+    animation: slideIn 0.3s ease-out forwards;
+  }
+`;
+
+// Add the styles to the document
+if (typeof document !== "undefined") {
+  const styleSheet = document.createElement("style");
+  styleSheet.textContent = styles;
+  document.head.appendChild(styleSheet);
+}
