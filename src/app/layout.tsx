@@ -15,8 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Miner Sprite Animation",
-  description: "On-chain sprite animation game",
+  title: "Axestract",
+  description:
+    "A demo game showcasing Abstracts new realtime JSON RPC endpoint.",
 };
 
 export default function RootLayout({
