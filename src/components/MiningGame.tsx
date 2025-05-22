@@ -449,12 +449,14 @@ export default function MiningGame({
                   `}
                   >
                     <div className="relative w-16 h-16 mb-1 flex items-center justify-center">
-                      <Image
-                        src={`/animations/axe/e-tool/${axeType}.png`}
-                        alt={AXE_DISPLAY_NAMES[axeType]}
-                        width={32}
-                        height={32}
-                        className="object-contain"
+                      <div
+                        className="w-[32px] h-[32px] transform scale-[3.125] translate-x-[-8px] translate-y-[8px]"
+                        style={{
+                          backgroundImage: `url(/animations/axe/e-tool/${axeType}.png)`,
+                          backgroundPosition: `-32px -64px` /* Column 2, Row 3 (axe facing right) */,
+                          backgroundSize: `160px 128px`,
+                          imageRendering: "pixelated",
+                        }}
                       />
                     </div>
                     <span className="text-sm text-[#5a4a1a] font-medium">
@@ -490,12 +492,14 @@ export default function MiningGame({
                   `}
                   >
                     <div className="relative w-16 h-16 mb-1 flex items-center justify-center">
-                      <Image
-                        src={`/animations/axe/e-tool/${axeType}.png`}
-                        alt={AXE_DISPLAY_NAMES[axeType]}
-                        width={32}
-                        height={32}
-                        className="object-contain"
+                      <div
+                        className="w-[32px] h-[32px] transform scale-[3.125] translate-x-[-8px] translate-y-[2px]"
+                        style={{
+                          backgroundImage: `url(/animations/axe/e-tool/${axeType}.png)`,
+                          backgroundPosition: `-32px -64px` /* Column 2, Row 3 (axe facing right) */,
+                          backgroundSize: `160px 128px`,
+                          imageRendering: "pixelated",
+                        }}
                       />
                     </div>
                     <span className="text-sm text-[#5a4a1a] font-medium">
