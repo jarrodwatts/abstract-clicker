@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
@@ -63,8 +64,8 @@ interface DotPatternProps extends React.SVGProps<SVGSVGElement> {
 export function DotPattern({
   width = 16,
   height = 16,
-  x = 0,
-  y = 0,
+  x,
+  y,
   cx = 1,
   cy = 1,
   cr = 1,
@@ -104,7 +105,7 @@ export function DotPattern({
         delay: Math.random() * 5,
         duration: Math.random() * 3 + 2,
       };
-    },
+    }
   );
 
   return (
@@ -113,7 +114,7 @@ export function DotPattern({
       aria-hidden="true"
       className={cn(
         "pointer-events-none absolute inset-0 h-full w-full",
-        className,
+        className
       )}
       {...props}
     >

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import { renderNatureTile } from "@/utils/natureImages";
+import { NatureTileName, renderNatureTile } from "@/utils/natureImages";
 import AnimationPreview from "@/components/AnimationPreview";
 import generateRandomCharacter from "@/lib/render-character/generateRandomCharacter";
 import Character from "@/types/Character";
@@ -147,7 +147,14 @@ export default function MiningGame({
         ctx.rotate(leaf.rotation);
         ctx.scale(leaf.scale, leaf.scale);
         ctx.globalAlpha = leaf.opacity;
-        await renderNatureTile(ctx, leaf.type as any, -15, -15, 30, 30);
+        await renderNatureTile(
+          ctx,
+          leaf.type as NatureTileName,
+          -15,
+          -15,
+          30,
+          30
+        );
         ctx.restore();
       }
     };
@@ -291,7 +298,7 @@ export default function MiningGame({
     setLeaves((prevLeaves) => [...prevLeaves, ...newLeaves]);
   };
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleCanvasClick = () => {
     // Increment click counter for animation speed scaling
     setIsAnimating(true);
     setLocalClickCount((prev) => prev + 1);
