@@ -16,6 +16,7 @@ import Image from "next/image";
 import { chain } from "@/const/chain";
 import useUserClicks from "@/hooks/useUserClicks";
 import { NumberTicker } from "./magicui/number-ticker";
+import { AnimatedList } from "./magicui/animated-list";
 
 // Types for leaf particle animation
 type Leaf = {
@@ -71,6 +72,11 @@ export default function MiningGame({
 
   // Local click count for animation speed
   const [localClickCount, setLocalClickCount] = useState(0);
+
+  // Transaction feed state
+  const [transactions, setTransactions] = useState<
+    Array<{ hash: `0x${string}`; timeTaken: number }>
+  >([]);
 
   // Render everything
   useEffect(() => {
@@ -288,8 +294,6 @@ export default function MiningGame({
   const nonceQuery = useTransactionNonce();
 
   async function submitOptimisticTransaction() {
-    const startTime = performance.now();
-
     if (!address) throw new Error("No AGW address found");
     if (!sessionData?.privateKey) throw new Error("No session signer found");
     if (!gasEstimateQuery.data) throw new Error("No gas estimate found");
@@ -297,7 +301,7 @@ export default function MiningGame({
 
     const signer = privateKeyToAccount(sessionData.privateKey);
 
-    await signClickTx(
+    const { txHash, timeTaken } = await signClickTx(
       address,
       signer,
       sessionData.session,
@@ -305,19 +309,31 @@ export default function MiningGame({
       // gasEstimateQuery.data
     );
 
-    const endTime = performance.now();
-
-    console.log(`⏱️: ${(endTime - startTime).toFixed(2)}ms`);
+    // Add transaction to the feed
+    setTransactions((prev) =>
+      [
+        {
+          hash: txHash,
+          timeTaken,
+        },
+        ...prev,
+      ].slice(0, 10)
+    ); // Keep last 10 transactions
   }
 
   return (
-    <>
+    <div
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+    >
+      {/* Game area (left + right columns) */}
       <div
         style={{
           display: "flex",
           flexDirection: "row",
           gap: "4rem",
           alignItems: "center",
+          width: "100%",
+          maxWidth: 1200,
         }}
       >
         {/* Left column: three stacked boxes */}
@@ -495,8 +511,76 @@ export default function MiningGame({
           </div>
           <div
             className={styles.gameFrameThin}
-            style={{ minWidth: 440, minHeight: 140 }}
-          />
+            style={{
+              minWidth: 440,
+              minHeight: 320,
+              padding: 20,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-start",
+            }}
+          >
+            {/* Transaction Feed Header and List */}
+            <h3
+              className="text-lg font-semibold mb-4"
+              style={{ color: "#5a4a1a" }}
+            >
+              Recent Transactions
+            </h3>
+            <div
+              className="flex items-center justify-between px-3 pb-4"
+              style={{
+                color: "#5a4a1a",
+                fontWeight: 600,
+                fontSize: 15,
+                borderBottom: "1px solid #e0e0b2",
+                marginBottom: 8,
+              }}
+            >
+              <span>Transaction</span>
+              <span className="flex items-center gap-1">
+                <span role="img" aria-label="stopwatch">
+                  ⏱️
+                </span>
+                Time Taken
+              </span>
+            </div>
+            <div
+              style={{
+                maxHeight: 200,
+                minHeight: 200,
+                overflowY: "auto",
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+              }}
+              className="hide-scrollbar"
+            >
+              <AnimatedList>
+                {transactions.slice(0, 5).map((tx) => (
+                  <a
+                    key={tx.hash}
+                    href={`${chain.blockExplorers?.default.url}/tx/${tx.hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block p-3 hover:bg-[#f5f5e6] rounded-lg transition-colors"
+                    style={{ color: "#5a4a1a" }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-sm">
+                        {`${tx.hash.slice(0, 6)}...${tx.hash.slice(-4)}`}
+                      </span>
+                      <span className="text-sm opacity-70 flex items-center gap-1">
+                        <span role="img" aria-label="stopwatch">
+                          ⏱️
+                        </span>{" "}
+                        {tx.timeTaken.toFixed(0)}ms
+                      </span>
+                    </div>
+                  </a>
+                ))}
+              </AnimatedList>
+            </div>
+          </div>
         </div>
         {/* Right column: main game area */}
         <div
@@ -531,7 +615,7 @@ export default function MiningGame({
             </div>
           </div>
           {/* Wood Bar */}
-          <div style={{ width: "100%", marginTop: 8 }}>
+          {/* <div style={{ width: "100%", marginTop: 8 }}>
             <div
               style={{ display: "flex", alignItems: "center", width: "100%" }}
             >
@@ -577,9 +661,14 @@ export default function MiningGame({
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
-    </>
+    </div>
   );
 }
+
+/* Add this CSS to hide the scrollbar */
+// In your global CSS or in a <style jsx global> block:
+// .hide-scrollbar::-webkit-scrollbar { display: none; }
+// .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

@@ -70,7 +70,9 @@ export default async function signClickTx(
   sessionSigner: Account,
   session: SessionConfig,
   nonce: number
-) {
+): Promise<{ txHash: `0x${string}`; timeTaken: number }> {
+  const startTime = performance.now();
+
   const preparedTransaction = await walletClient.prepareTransactionRequest({
     to: COOKIE_CLICKER_CONTRACT_ADDRESS as `0x${string}`,
     data: toFunctionSelector("click()"),
@@ -97,7 +99,13 @@ export default async function signClickTx(
   // 6. Send the raw transaction
   const response = await sendRawTransactionWithDetailedOutput(signature);
 
-  return response;
+  const endTime = performance.now();
+  console.log(`⏱️: ${(endTime - startTime).toFixed(2)}ms`);
+
+  return {
+    txHash: response.result.transactionHash,
+    timeTaken: endTime - startTime,
+  };
 }
 
 export async function sendRawTransactionWithDetailedOutput(

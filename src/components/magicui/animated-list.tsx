@@ -34,7 +34,7 @@ export const AnimatedList = React.memo(
     const [index, setIndex] = useState(0);
     const childrenArray = useMemo(
       () => React.Children.toArray(children),
-      [children],
+      [children]
     );
 
     useEffect(() => {
@@ -48,8 +48,7 @@ export const AnimatedList = React.memo(
     }, [index, delay, childrenArray.length]);
 
     const itemsToShow = useMemo(() => {
-      const result = childrenArray.slice(0, index + 1).reverse();
-      return result;
+      return childrenArray.slice(0, index + 1);
     }, [index, childrenArray]);
 
     return (
@@ -66,7 +65,7 @@ export const AnimatedList = React.memo(
         </AnimatePresence>
       </div>
     );
-  },
+  }
 );
 
 AnimatedList.displayName = "AnimatedList";
