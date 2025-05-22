@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { renderNatureTile } from "@/utils/natureImages";
 import AnimationPreview from "@/components/AnimationPreview";
 import generateRandomCharacter from "@/lib/render-character/generateRandomCharacter";
@@ -11,6 +11,8 @@ import { useAbstractSession } from "@/hooks/useAbstractSession";
 import { privateKeyToAccount } from "viem/accounts";
 import signClickTx from "@/lib/transaction/sendClickTx";
 import { useAccount } from "wagmi";
+import styles from "./GameFrame.module.css";
+import Image from "next/image";
 
 // Types for leaf particle animation
 type Leaf = {
@@ -300,25 +302,191 @@ export default function MiningGame({
   return (
     <>
       <div
-        className="flex flex-row outline outline-red-500 cursor-pointer"
-        onClick={handleCanvasClick}
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          gap: "4rem",
+          alignItems: "center",
+        }}
       >
-        <AnimationPreview
-          action={"axe"}
-          character={character}
-          isAnimating={isAnimating}
-          canvasSize={280}
-          drawWidth={280}
-          drawHeight={280}
-          clickCount={clickCount}
-          style={{ width: "280px", height: "280px" }}
-        />
-        <canvas
-          ref={canvasRef}
-          width={320}
-          height={320}
-          className="-ml-42 z-10"
-        />
+        {/* Left column: three stacked boxes */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div
+            className={styles.gameFrameThin}
+            style={{
+              minWidth: 440,
+              minHeight: 72,
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              padding: 20,
+            }}
+          >
+            <Image
+              src="/abs.svg"
+              alt="Abstract Wallet"
+              width={40}
+              height={36}
+              style={{ flexShrink: 0 }}
+            />
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: "#5a4a1a",
+                  fontSize: 18,
+                  lineHeight: 1,
+                }}
+              >
+                Your Abstract Global Wallet
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {address ? (
+                  <a
+                    href={`https://abscan.org/address/${address}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      color: "#5a4a1a",
+                      opacity: 0.85,
+                      textDecoration: "none",
+                      transition: "opacity 0.2s",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      maxWidth: 220,
+                    }}
+                    title="View on abscan.org"
+                  >
+                    {`${address.slice(0, 6)}...${address.slice(-4)}`}
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      style={{ marginLeft: 4, opacity: 0.7 }}
+                    >
+                      <path
+                        d="M5 11L11 5"
+                        stroke="#5a4a1a"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M7.5 5H11V8.5"
+                        stroke="#5a4a1a"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </a>
+                ) : (
+                  "Not connected"
+                )}
+              </span>
+            </div>
+          </div>
+          <div
+            className={styles.gameFrameThin}
+            style={{ minWidth: 440, minHeight: 140 }}
+          />
+          <div
+            className={styles.gameFrameThin}
+            style={{ minWidth: 440, minHeight: 140 }}
+          />
+        </div>
+        {/* Right column: main game area */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.25rem",
+          }}
+        >
+          <div className={styles.gameFrame}>
+            <div
+              className="flex flex-row cursor-pointer"
+              onClick={handleCanvasClick}
+            >
+              <AnimationPreview
+                action={"axe"}
+                character={character}
+                isAnimating={isAnimating}
+                canvasSize={280}
+                drawWidth={280}
+                drawHeight={280}
+                clickCount={clickCount}
+                style={{ width: "280px", height: "280px" }}
+              />
+              <canvas
+                ref={canvasRef}
+                width={320}
+                height={320}
+                className="-ml-32 z-10"
+              />
+            </div>
+          </div>
+          {/* Wood Bar */}
+          <div style={{ width: "100%", marginTop: 8 }}>
+            <div
+              style={{ display: "flex", alignItems: "center", width: "100%" }}
+            >
+              <div
+                style={{
+                  flex: 1,
+                  height: 32,
+                  background: "#e0e0b2",
+                  borderRadius: 12,
+                  border: "2px solid #a86b2d",
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+              >
+                <div
+                  style={{
+                    width: "60%", // Wood progress (hardcoded for now)
+                    height: "100%",
+                    background:
+                      "linear-gradient(90deg, #ffe066 0%, #ffd700 100%)",
+                    borderRadius: 12,
+                    transition: "width 0.3s",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 0,
+                    top: 0,
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontWeight: 700,
+                    color: "#5a4a1a",
+                    fontSize: 16,
+                    letterSpacing: 1,
+                    textShadow: "0 1px 0 #fff",
+                  }}
+                >
+                  120 / 200
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </>
   );
