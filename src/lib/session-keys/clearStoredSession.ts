@@ -19,7 +19,6 @@ import { QUERY_KEYS } from "@/const/query-keys";
  * @param {Address} userAddress - The wallet address whose session data should be cleared
  */
 export const clearStoredSession = (userAddress: Address) => {
-  console.log("Clearing session for address:", userAddress);
   localStorage.removeItem(`${LOCAL_STORAGE_KEY_PREFIX}${userAddress}`);
   localStorage.removeItem(`${ENCRYPTION_KEY_PREFIX}${userAddress}`);
 

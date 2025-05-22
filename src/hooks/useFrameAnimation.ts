@@ -52,15 +52,6 @@ export function useFrameAnimation(
       BASE_ANIMATION_SPEED_MS - clicksPerSecond * SPEED_REDUCTION_PER_CLICK
     );
 
-    console.log(
-      "Click speed:",
-      clicksPerSecond.toFixed(1),
-      "clicks/sec",
-      "Animation speed:",
-      newSpeed.toFixed(0),
-      "ms"
-    );
-
     setAnimationSpeed(newSpeed);
 
     // Clear existing decay timer

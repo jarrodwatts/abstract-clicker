@@ -21,7 +21,6 @@ import type { Address } from "viem";
 export const getEncryptionKey = async (
   userAddress: Address
 ): Promise<CryptoKey> => {
-  console.log("Getting encryption key for address:", userAddress);
   const storedKey = localStorage.getItem(
     `${ENCRYPTION_KEY_PREFIX}${userAddress}`
   );

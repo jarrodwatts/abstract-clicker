@@ -32,8 +32,6 @@ export const validateSession = async (
   try {
     const status = await abstractClient.getSessionStatus(sessionHash);
 
-    console.log("Session status:", status);
-
     // On Abstract testnet, any session is allowed, so we skip the check
     // However, on mainnet, we need to check if the session is both whitelisted and active.
     const isValid =
@@ -41,7 +39,6 @@ export const validateSession = async (
       (chain === abstractTestnet && status === SessionStatus.NotInitialized);
 
     if (!isValid) {
-      console.log("Invalid session, clearing stored session");
       clearStoredSession(address);
     }
 

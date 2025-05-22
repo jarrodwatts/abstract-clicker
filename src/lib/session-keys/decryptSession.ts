@@ -21,7 +21,6 @@ export const decrypt = async (
   encryptedData: string,
   key: CryptoKey
 ): Promise<string> => {
-  console.log("Decrypting data:", encryptedData);
   const { iv, data } = JSON.parse(encryptedData);
   const decrypted = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: Buffer.from(iv, "hex") },
