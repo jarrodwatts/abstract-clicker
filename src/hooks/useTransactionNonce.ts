@@ -24,9 +24,10 @@ export function useTransactionNonce() {
 
   // Function to increment the local nonce
   const incrementNonce = () => {
-    if (localNonce !== undefined) {
-      setLocalNonce(localNonce + 1);
-    }
+    setLocalNonce((oldVal) => {
+      if (oldVal !== undefined) return oldVal + 1;
+      return oldVal;
+    });
   };
 
   // Force refresh from blockchain

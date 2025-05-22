@@ -24,9 +24,10 @@ export function useUserClicks() {
   }, [clickQuery.data, localClickCount]);
 
   const incrementClickCount = () => {
-    if (localClickCount !== undefined) {
-      setLocalClickCount(localClickCount + 1);
-    }
+    setLocalClickCount((oldVal) => {
+      if (oldVal !== undefined) return oldVal + 1;
+      return oldVal;
+    });
   };
 
   const refreshClickCount = async () => {
