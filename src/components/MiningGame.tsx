@@ -322,32 +322,39 @@ export default function MiningGame({
   }
 
   return (
-    <div
-      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
-    >
+    <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4">
       {/* Game area (left + right columns) */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: "4rem",
-          alignItems: "center",
-          width: "100%",
-          maxWidth: 1200,
-        }}
-      >
-        {/* Left column: three stacked boxes */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <div className="flex flex-col md:flex-row w-full gap-y-4 md:gap-y-0 md:gap-x-16 items-start">
+        {/* Right column: main game area (order-1 on mobile) */}
+        <div className="flex flex-col items-center w-full md:w-1/2 gap-1 order-1 md:order-none">
+          <div className={`${styles.gameFrame} w-full`}>
+            <div
+              className="flex flex-row cursor-pointer w-full justify-center"
+              onClick={handleCanvasClick}
+            >
+              <AnimationPreview
+                action={"axe"}
+                character={character}
+                isAnimating={isAnimating}
+                canvasSize={280}
+                drawWidth={280}
+                drawHeight={280}
+                clickCount={localClickCount}
+                style={{ width: "100%", maxWidth: 280, maxHeight: 280 }}
+              />
+              <canvas
+                ref={canvasRef}
+                width={320}
+                height={320}
+                className="-ml-32 z-10 w-full max-w-[320px] h-auto"
+              />
+            </div>
+          </div>
+        </div>
+        {/* Left column: three stacked boxes (order-2 on mobile) */}
+        <div className="flex flex-col gap-4 w-full md:w-1/2 order-2 md:order-none">
           <div
-            className={styles.gameFrameThin}
-            style={{
-              minWidth: 440,
-              minHeight: 72,
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              padding: 20,
-            }}
+            className={`${styles.gameFrameThin} min-h-[72px] flex items-center gap-4 p-5 w-full`}
           >
             <Image
               src="/abs.svg"
@@ -425,15 +432,7 @@ export default function MiningGame({
             </div>
           </div>
           <div
-            className={styles.gameFrameThin}
-            style={{
-              minWidth: 440,
-              minHeight: 72,
-              display: "flex",
-              alignItems: "center",
-              gap: 16,
-              padding: 20,
-            }}
+            className={`${styles.gameFrameThin} min-h-[72px] flex items-center gap-4 p-5 w-full`}
           >
             <svg
               width="36"
@@ -510,33 +509,13 @@ export default function MiningGame({
             </div>
           </div>
           <div
-            className={styles.gameFrameThin}
-            style={{
-              minWidth: 440,
-              minHeight: 320,
-              padding: 20,
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-start",
-            }}
+            className={`${styles.gameFrameThin} min-h-[320px] p-5 flex flex-col justify-start w-full`}
           >
             {/* Transaction Feed Header and List */}
-            <h3
-              className="text-lg font-semibold mb-4"
-              style={{ color: "#5a4a1a" }}
-            >
+            <h3 className="text-lg font-semibold mb-4 text-[#5a4a1a]">
               Recent Transactions
             </h3>
-            <div
-              className="flex items-center justify-between px-3 pb-4"
-              style={{
-                color: "#5a4a1a",
-                fontWeight: 600,
-                fontSize: 15,
-                borderBottom: "1px solid #e0e0b2",
-                marginBottom: 8,
-              }}
-            >
+            <div className="flex items-center justify-between px-3 pb-4 text-[#5a4a1a] font-semibold text-[15px] border-b border-[#e0e0b2] mb-2">
               <span>Transaction</span>
               <span className="flex items-center gap-1">
                 <span role="img" aria-label="stopwatch">
@@ -545,16 +524,7 @@ export default function MiningGame({
                 Time Taken
               </span>
             </div>
-            <div
-              style={{
-                maxHeight: 200,
-                minHeight: 200,
-                overflowY: "auto",
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-              }}
-              className="hide-scrollbar"
-            >
+            <div className="max-h-[200px] min-h-[200px] overflow-y-auto hide-scrollbar">
               <AnimatedList>
                 {transactions.slice(0, 5).map((tx) => (
                   <a
@@ -562,8 +532,7 @@ export default function MiningGame({
                     href={`${chain.blockExplorers?.default.url}/tx/${tx.hash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block p-3 hover:bg-[#f5f5e6] rounded-lg transition-colors"
-                    style={{ color: "#5a4a1a" }}
+                    className="block p-3 hover:bg-[#f5f5e6] rounded-lg transition-colors text-[#5a4a1a]"
                   >
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-sm">
@@ -582,93 +551,12 @@ export default function MiningGame({
             </div>
           </div>
         </div>
-        {/* Right column: main game area */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: "0.25rem",
-          }}
-        >
-          <div className={styles.gameFrame}>
-            <div
-              className="flex flex-row cursor-pointer"
-              onClick={handleCanvasClick}
-            >
-              <AnimationPreview
-                action={"axe"}
-                character={character}
-                isAnimating={isAnimating}
-                canvasSize={280}
-                drawWidth={280}
-                drawHeight={280}
-                clickCount={localClickCount}
-                style={{ width: "280px", height: "280px" }}
-              />
-              <canvas
-                ref={canvasRef}
-                width={320}
-                height={320}
-                className="-ml-32 z-10"
-              />
-            </div>
-          </div>
-          {/* Wood Bar */}
-          {/* <div style={{ width: "100%", marginTop: 8 }}>
-            <div
-              style={{ display: "flex", alignItems: "center", width: "100%" }}
-            >
-              <div
-                style={{
-                  flex: 1,
-                  height: 32,
-                  background: "#e0e0b2",
-                  borderRadius: 12,
-                  border: "2px solid #a86b2d",
-                  overflow: "hidden",
-                  position: "relative",
-                }}
-              >
-                <div
-                  style={{
-                    width: "60%", // Wood progress (hardcoded for now)
-                    height: "100%",
-                    background:
-                      "linear-gradient(90deg, #ffe066 0%, #ffd700 100%)",
-                    borderRadius: 12,
-                    transition: "width 0.3s",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 0,
-                    top: 0,
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontWeight: 700,
-                    color: "#5a4a1a",
-                    fontSize: 16,
-                    letterSpacing: 1,
-                    textShadow: "0 1px 0 #fff",
-                  }}
-                >
-                  120 / 200
-                </div>
-              </div>
-            </div>
-          </div> */}
-        </div>
       </div>
+      {/* Hide scrollbar utility for transaction feed */}
+      <style>{`
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </div>
   );
 }
-
-/* Add this CSS to hide the scrollbar */
-// In your global CSS or in a <style jsx global> block:
-// .hide-scrollbar::-webkit-scrollbar { display: none; }
-// .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
