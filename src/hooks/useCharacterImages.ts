@@ -8,18 +8,53 @@ import characterProperties from "@/const/characterProperties";
 export function useCharacterImages(
   character: Character,
   action: string,
-  getFilePathForLayer: (layer: keyof typeof characterProperties) => string
+  getFilePathForLayer: (layer: keyof typeof characterProperties) => string,
+  getToolFilePath?: () => string
 ) {
   const [layerImages, setLayerImages] = useState<
     Record<string, HTMLImageElement>
   >({});
+  const [toolImage, setToolImage] = useState<HTMLImageElement | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Reset state when character or action changes
   useEffect(() => {
     setLayerImages({});
+    setToolImage(null);
     setIsLoading(true);
   }, [character, action]);
+
+  // Load tool image separately
+  useEffect(() => {
+    if (!getToolFilePath) {
+      setToolImage(null);
+      return;
+    }
+
+    const loadToolImage = async () => {
+      const image = new Image();
+      const src = getToolFilePath();
+
+      if (!src) {
+        setToolImage(null);
+        return;
+      }
+
+      return new Promise<void>((resolve) => {
+        image.src = src;
+        image.onload = () => {
+          setToolImage(image);
+          resolve();
+        };
+        image.onerror = () => {
+          setToolImage(null);
+          resolve();
+        };
+      });
+    };
+
+    loadToolImage();
+  }, [getToolFilePath]);
 
   // Load all images for the character layers
   useEffect(() => {
@@ -73,5 +108,5 @@ export function useCharacterImages(
     loadImages();
   }, [character, action, getFilePathForLayer]);
 
-  return { layerImages, isLoading };
+  return { layerImages, toolImage, isLoading };
 }

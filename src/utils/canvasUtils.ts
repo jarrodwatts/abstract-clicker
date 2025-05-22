@@ -18,7 +18,8 @@ export function drawCharacterLayers(
   action: keyof typeof actions,
   direction: keyof typeof directions,
   drawWidth?: number,
-  drawHeight?: number
+  drawHeight?: number,
+  toolImage?: HTMLImageElement | null
 ) {
   // Clear canvas before drawing new frame
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -81,6 +82,38 @@ export function drawCharacterLayers(
       drawH
     );
   });
+
+  // Draw the tool on top if provided
+  if (toolImage) {
+    const { frameSize } = actions[action];
+    const directionIndex = directions[direction];
+
+    // Calculate sprite position in spritesheet for the tool
+    // For tools, we don't have colors, so we only need to account for the animation frame
+    const spriteX = animationFrame * frameSize.x;
+    const spriteY = directionIndex * frameSize.y;
+
+    // Use provided drawWidth/drawHeight or default to canvas size
+    const drawSize = canvas.width;
+    const drawW = drawWidth || drawSize;
+    const drawH = drawHeight || drawSize;
+    const drawX = (canvas.width - drawW) / 2;
+    const drawY = (canvas.height - drawH) / 2;
+
+    ctx.drawImage(
+      toolImage,
+      // Source coordinates - adjust to skip border pixels
+      spriteX + 1, // Skip leftmost 1px column
+      spriteY + 1, // Skip top 1px row
+      frameSize.x - 1, // Reduce width by 2px (1px from each side)
+      frameSize.y - 1, // Reduce height by 1px (from top)
+      // Destination coordinates
+      drawX,
+      drawY,
+      drawW,
+      drawH
+    );
+  }
 
   // Restore canvas context
   ctx.restore();

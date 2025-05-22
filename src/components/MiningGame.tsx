@@ -18,6 +18,38 @@ import useUserClicks from "@/hooks/useUserClicks";
 import { NumberTicker } from "./magicui/number-ticker";
 import { AnimatedList } from "./magicui/animated-list";
 
+// Types for weapon selection
+type AxeType =
+  | "axe"
+  | "axe_wood"
+  | "axe_copper"
+  | "axe_silver"
+  | "axe_gold"
+  | "axe_blue"
+  | "axe_pink";
+
+// Axe unlock thresholds
+const AXE_UNLOCK_THRESHOLDS: Record<AxeType, number> = {
+  axe: 0,
+  axe_wood: 100,
+  axe_copper: 500,
+  axe_silver: 1000,
+  axe_gold: 5000,
+  axe_blue: 10000,
+  axe_pink: 100000,
+};
+
+// Axe display names
+const AXE_DISPLAY_NAMES: Record<AxeType, string> = {
+  axe: "Basic Axe",
+  axe_wood: "Wood Axe",
+  axe_copper: "Copper Axe",
+  axe_silver: "Silver Axe",
+  axe_gold: "Gold Axe",
+  axe_blue: "Blue Axe",
+  axe_pink: "Pink Axe",
+};
+
 // Types for leaf particle animation
 type Leaf = {
   x: number;
@@ -59,6 +91,7 @@ export default function MiningGame({
   const [character, setCharacter] = useState(
     () => initialCharacter || generateRandomCharacter()
   );
+  const [selectedAxe, setSelectedAxe] = useState<AxeType>("axe");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Leaf animation system
@@ -321,6 +354,12 @@ export default function MiningGame({
     ); // Keep last 10 transactions
   }
 
+  // Helper function to check if an axe is unlocked
+  const isAxeUnlocked = (axeType: AxeType): boolean => {
+    if (!clickCount) return axeType === "axe";
+    return clickCount >= AXE_UNLOCK_THRESHOLDS[axeType];
+  };
+
   return (
     <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4">
       {/* Game area (left + right columns) */}
@@ -341,6 +380,7 @@ export default function MiningGame({
                 drawHeight={280}
                 clickCount={localClickCount}
                 style={{ width: "100%", maxWidth: 280, maxHeight: 280 }}
+                axeType={selectedAxe}
               />
               <canvas
                 ref={canvasRef}
@@ -350,11 +390,127 @@ export default function MiningGame({
               />
             </div>
           </div>
+          {/* New Character Button */}
+          <button
+            onClick={() => setCharacter(generateRandomCharacter())}
+            className="w-full min-h-[48px] flex items-center gap-4 p-3 text-left transition-colors bg-[#bfc98a] border-4 border-[#a86b2d] rounded-[32px] shadow-[12px_16px_32px_0_rgba(80,40,10,0.35)] relative cursor-pointer mt-2 hover:bg-[#d4e0a0] hover:border-[#8b5a2b] hover:shadow-[8px_12px_24px_0_rgba(80,40,10,0.25)]"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 36 36"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="flex-shrink-0"
+            >
+              <path
+                d="M18 6C11.373 6 6 11.373 6 18C6 24.627 11.373 30 18 30C24.627 30 30 24.627 30 18C30 11.373 24.627 6 18 6ZM18 28C12.477 28 8 23.523 8 18C8 12.477 12.477 8 18 8C23.523 8 28 12.477 28 18C28 23.523 23.523 28 18 28Z"
+                fill="#5a4a1a"
+              />
+              <path
+                d="M18 12C17.448 12 17 12.448 17 13V17H13C12.448 17 12 17.448 12 18C12 18.552 12.448 19 13 19H17V23C17 23.552 17.448 24 18 24C18.552 24 19 23.552 19 23V19H23C23.552 19 24 18.552 24 18C24 17.448 23.552 17 23 17H19V13C19 12.448 18.552 12 18 12Z"
+                fill="#5a4a1a"
+              />
+            </svg>
+            <span className="font-bold text-[#5a4a1a] text-base">
+              Generate New Character
+            </span>
+          </button>
+
+          {/* Axe Selection Grid */}
+          <div className="w-full mt-4">
+            <h3 className="font-bold text-[#5a4a1a] text-base mb-2">
+              Select Axe
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {/* First Row */}
+              {(["axe_wood", "axe_copper", "axe_silver"] as AxeType[]).map(
+                (axeType) => (
+                  <button
+                    key={axeType}
+                    onClick={() => setSelectedAxe(axeType)}
+                    disabled={!isAxeUnlocked(axeType)}
+                    className={`
+                    relative p-2 border-4 rounded-lg transition-all flex flex-col items-center
+                    ${
+                      selectedAxe === axeType
+                        ? "border-[#a86b2d] bg-[#d4e0a0]"
+                        : isAxeUnlocked(axeType)
+                        ? "border-[#ccc4a1] bg-[#e0e0b2] hover:bg-[#d4e0a0] hover:border-[#a86b2d]"
+                        : "border-[#aaa] bg-[#ddd] opacity-50 cursor-not-allowed"
+                    }
+                  `}
+                  >
+                    <div className="relative w-16 h-16 mb-1 flex items-center justify-center">
+                      <Image
+                        src={`/animations/axe/e-tool/${axeType}.png`}
+                        alt={AXE_DISPLAY_NAMES[axeType]}
+                        width={32}
+                        height={32}
+                        className="object-contain"
+                      />
+                    </div>
+                    <span className="text-sm text-[#5a4a1a] font-medium">
+                      {AXE_DISPLAY_NAMES[axeType]}
+                    </span>
+                    {!isAxeUnlocked(axeType) && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-md">
+                        <div className="bg-[#5a4a1a] text-white px-2 py-1 rounded text-xs">
+                          Unlocks at {AXE_UNLOCK_THRESHOLDS[axeType]} clicks
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                )
+              )}
+
+              {/* Second Row */}
+              {(["axe_gold", "axe_blue", "axe_pink"] as AxeType[]).map(
+                (axeType) => (
+                  <button
+                    key={axeType}
+                    onClick={() => setSelectedAxe(axeType)}
+                    disabled={!isAxeUnlocked(axeType)}
+                    className={`
+                    relative p-2 border-4 rounded-lg transition-all flex flex-col items-center
+                    ${
+                      selectedAxe === axeType
+                        ? "border-[#a86b2d] bg-[#d4e0a0]"
+                        : isAxeUnlocked(axeType)
+                        ? "border-[#ccc4a1] bg-[#e0e0b2] hover:bg-[#d4e0a0] hover:border-[#a86b2d]"
+                        : "border-[#aaa] bg-[#ddd] opacity-50 cursor-not-allowed"
+                    }
+                  `}
+                  >
+                    <div className="relative w-16 h-16 mb-1 flex items-center justify-center">
+                      <Image
+                        src={`/animations/axe/e-tool/${axeType}.png`}
+                        alt={AXE_DISPLAY_NAMES[axeType]}
+                        width={32}
+                        height={32}
+                        className="object-contain"
+                      />
+                    </div>
+                    <span className="text-sm text-[#5a4a1a] font-medium">
+                      {AXE_DISPLAY_NAMES[axeType]}
+                    </span>
+                    {!isAxeUnlocked(axeType) && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-md">
+                        <div className="bg-[#5a4a1a] text-white px-2 py-1 rounded text-xs">
+                          Unlocks at {AXE_UNLOCK_THRESHOLDS[axeType]} clicks
+                        </div>
+                      </div>
+                    )}
+                  </button>
+                )
+              )}
+            </div>
+          </div>
         </div>
         {/* Left column: three stacked boxes (order-2 on mobile) */}
         <div className="flex flex-col gap-4 w-full md:w-1/2 order-2 md:order-none">
           <div
-            className={`${styles.gameFrameThin} min-h-[72px] flex flex-row items-center gap-4 p-5 w-full`}
+            className={`${styles.gameFrameThin} min-h-[72px] flex flex-row items-center gap-4 w-full`}
           >
             <Image
               src="/abs.svg"
@@ -465,7 +621,7 @@ export default function MiningGame({
             </div>
           </div>
           <div
-            className={`${styles.gameFrameThin} min-h-[320px] p-5 flex flex-col justify-start w-full`}
+            className={`${styles.gameFrameThin} min-h-[480px] p-5 flex flex-col justify-start w-full`}
           >
             {/* Transaction Feed Header and List */}
             <h3 className="text-lg font-semibold mb-4 text-[#5a4a1a]">
@@ -480,7 +636,7 @@ export default function MiningGame({
                 Time Taken
               </span>
             </div>
-            <div className="max-h-[200px] min-h-[200px] overflow-y-auto hide-scrollbar">
+            <div className="max-h-[340px] min-h-[200px] overflow-y-auto hide-scrollbar">
               <AnimatedList>
                 {transactions.map((tx) => (
                   <a

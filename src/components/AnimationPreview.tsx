@@ -9,6 +9,16 @@ import { useCharacterImages } from "@/hooks/useCharacterImages";
 import { useFrameAnimation } from "@/hooks/useFrameAnimation";
 import { drawCharacterLayers, CANVAS_SIZE } from "@/utils/canvasUtils";
 
+// Types for weapon selection
+type AxeType =
+  | "axe"
+  | "axe_wood"
+  | "axe_copper"
+  | "axe_silver"
+  | "axe_gold"
+  | "axe_blue"
+  | "axe_pink";
+
 interface AnimationCanvasProps {
   character: Character;
   action: keyof typeof actions;
@@ -19,6 +29,7 @@ interface AnimationCanvasProps {
   drawHeight?: number;
   clickCount?: number;
   style?: React.CSSProperties;
+  axeType?: AxeType;
 }
 
 const AnimationPreview: React.FC<AnimationCanvasProps> = ({
@@ -31,6 +42,7 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
   drawHeight,
   clickCount = 0,
   style,
+  axeType = "axe",
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -50,10 +62,16 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
     [action, character]
   );
 
-  const { layerImages, isLoading } = useCharacterImages(
+  // Get special file path for the axe/tool
+  const getToolFilePath = useCallback(() => {
+    return `animations/${actions[action].path}/e-tool/${axeType}.png`;
+  }, [action, axeType]);
+
+  const { layerImages, toolImage, isLoading } = useCharacterImages(
     character,
     action,
-    getFilePathForLayer
+    getFilePathForLayer,
+    getToolFilePath
   );
 
   const animationFrame = useFrameAnimation(
@@ -80,10 +98,12 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
       action,
       direction,
       drawWidth,
-      drawHeight
+      drawHeight,
+      toolImage
     );
   }, [
     layerImages,
+    toolImage,
     animationFrame,
     character,
     action,
