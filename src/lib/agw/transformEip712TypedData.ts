@@ -1,14 +1,7 @@
-import {
-  fromHex,
-  Hex,
-  isHex,
-  toHex,
-  TypedDataDefinition,
-  UnionRequiredBy,
-} from "viem";
+import { Hex, toHex, TypedDataDefinition, UnionRequiredBy } from "viem";
 import { SignEip712TransactionParameters } from "viem/zksync";
 import { type ExactPartial, type OneOf } from "viem";
-import { assertRequest, parseAccount } from "viem/utils";
+import { parseAccount } from "viem/utils";
 import {
   type ChainEIP712,
   type SendEip712TransactionParameters,
@@ -38,15 +31,7 @@ export function isEIP712Transaction(
   return false;
 }
 
-export function assertEip712Request(args: AssertEip712RequestParameters) {
-  if (!isEIP712Transaction(args as any))
-    throw new Error("Typed data is not an EIP712 transaction");
-  assertRequest(args as any);
-}
-
 export function isEip712TypedData(typedData: TypedDataDefinition): boolean {
-  console.log(typedData);
-
   return (
     typedData.message &&
     typedData.domain?.name === "zkSync" &&
@@ -105,13 +90,4 @@ export function transformEip712TypedData(
         ? (typedData.message["paymasterInput"] as Hex)
         : undefined,
   };
-}
-
-export function transformHexValues(transaction: any, keys: string[]) {
-  if (!transaction) return;
-  for (const key of keys) {
-    if (isHex(transaction[key])) {
-      transaction[key] = fromHex(transaction[key], "bigint");
-    }
-  }
 }

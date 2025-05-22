@@ -1,4 +1,4 @@
-import { encodeAbiParameters, parseAbiParameters, Hex, getAbiItem } from "viem";
+import { encodeAbiParameters, Hex, getAbiItem } from "viem";
 import { SessionKeyValidatorAbi } from "@/const/contracts";
 import { SessionConfig } from "@abstract-foundation/agw-client/sessions";
 

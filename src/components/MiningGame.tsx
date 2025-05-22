@@ -9,9 +9,7 @@ import useClickGasEstimate from "@/hooks/useClickGasEstimate";
 import useTransactionNonce from "@/hooks/useTransactionNonce";
 import { useAbstractSession } from "@/hooks/useAbstractSession";
 import { privateKeyToAccount } from "viem/accounts";
-import signClickTx, {
-  sendRawTransactionWithDetailedOutput,
-} from "@/lib/transaction/sendClickTx";
+import signClickTx from "@/lib/transaction/sendClickTx";
 import { useAccount } from "wagmi";
 
 export default function MiningGame({
@@ -79,15 +77,17 @@ export default function MiningGame({
 
     const signer = privateKeyToAccount(sessionData.privateKey);
 
-    const result = await signClickTx(
+    await signClickTx(
       address,
       signer,
       sessionData.session,
-      nonceQuery.nonce,
-      gasEstimateQuery.data
+      nonceQuery.nonce
+      // gasEstimateQuery.data
     );
 
-    console.log(result);
+    const endTime = performance.now();
+
+    console.log(`⏱️: ${(endTime - startTime).toFixed(2)}ms`);
   }
 
   return (

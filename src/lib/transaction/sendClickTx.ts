@@ -1,34 +1,11 @@
-import {
-  COOKIE_CLICKER_CONTRACT_ADDRESS,
-  SESSION_KEY_VALIDATOR_ADDRESS,
-} from "@/const/contracts";
-import { chain, VALID_CHAINS } from "@/const/chain";
-import {
-  Account,
-  BaseError,
-  encodeAbiParameters,
-  getTypesForEIP712Domain,
-  Hex,
-  http,
-  parseAbiParameters,
-  toFunctionSelector,
-} from "viem";
+import { COOKIE_CLICKER_CONTRACT_ADDRESS } from "@/const/contracts";
+import { chain } from "@/const/chain";
+import { Account, http, toFunctionSelector } from "viem";
 import {
   createSessionClient,
   SessionConfig,
 } from "@abstract-foundation/agw-client/sessions";
 import { walletClient } from "@/const/walletClient";
-import { getPeriodIdsForTransaction } from "../agw/getPeriodIdsForTransaction";
-import {
-  assertEip712Request,
-  AssertEip712RequestParameters,
-  transformEip712TypedData,
-  transformHexValues,
-} from "../agw/transformEip712TypedData";
-import { encodeSessionWithPeriodIds } from "../agw/encodeSessionWithPeriodIds";
-import { signTypedData } from "viem/actions";
-import { publicClient } from "@/const/publicClient";
-import { AGWAccountAbi } from "@abstract-foundation/agw-client/constants";
 
 // Store original fetch
 const originalFetch = global.fetch;
@@ -41,14 +18,8 @@ global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   ) {
     if (init?.body) {
       const body = JSON.parse(init.body as string);
-      console.log(`JSON RPC Request sent to ${body.method}`);
-
-      console.log(body);
-
       // Chain ID
       if (body.method === "eth_chainId") {
-        console.log(`RPC Request - eth_chainId - (OVERRIDDEN)`);
-
         return new Response(
           JSON.stringify({
             jsonrpc: "2.0",
@@ -61,8 +32,6 @@ global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       }
 
       if (body.method === "eth_getCode") {
-        console.log(`RPC Request - eth_getCode - (OVERRIDDEN)`);
-
         return new Response(
           JSON.stringify({
             jsonrpc: "2.0",
@@ -80,8 +49,6 @@ global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         body.params[0].data ==
           "0xdb8a323f0000000000000000000000000000000000000000000000000000000000000001"
       ) {
-        console.log(`RPC Request - eth_call - (OVERRIDDEN)`);
-
         return new Response(
           JSON.stringify({
             jsonrpc: "2.0",
@@ -102,8 +69,7 @@ export default async function signClickTx(
   agwAddress: `0x${string}`,
   sessionSigner: Account,
   session: SessionConfig,
-  nonce: number,
-  gas: bigint
+  nonce: number
 ) {
   const preparedTransaction = await walletClient.prepareTransactionRequest({
     to: COOKIE_CLICKER_CONTRACT_ADDRESS as `0x${string}`,
@@ -125,11 +91,12 @@ export default async function signClickTx(
     transport: http(chain.rpcUrls.default.http[0]),
   });
 
-  // @ts-ignore
+  // @ts-expect-error - TODO: fix this
   const signature = await sessionClient.signTransaction(preparedTransaction);
 
   // 6. Send the raw transaction
   const response = await sendRawTransactionWithDetailedOutput(signature);
+
   return response;
 }
 
@@ -150,7 +117,6 @@ export async function sendRawTransactionWithDetailedOutput(
   });
 
   const data = await response.json();
-  console.log("Transaction response:", data);
 
   return data;
 }
