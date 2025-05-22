@@ -13,6 +13,9 @@ import signClickTx from "@/lib/transaction/sendClickTx";
 import { useAccount } from "wagmi";
 import styles from "./GameFrame.module.css";
 import Image from "next/image";
+import { chain } from "@/const/chain";
+import useUserClicks from "@/hooks/useUserClicks";
+import { NumberTicker } from "./magicui/number-ticker";
 
 // Types for leaf particle animation
 type Leaf = {
@@ -44,10 +47,14 @@ export default function MiningGame({
 }) {
   const { address } = useAccount();
   const { data: sessionData } = useAbstractSession();
+  const {
+    clickCount,
+    isLoading: isClicksLoading,
+    incrementClickCount,
+  } = useUserClicks();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [clickCount, setClickCount] = useState(0);
   const [character] = useState(
     () => initialCharacter || generateRandomCharacter()
   );
@@ -61,6 +68,9 @@ export default function MiningGame({
   const [treeScale, setTreeScale] = useState(1);
   const [treeAnimationTrigger, setTreeAnimationTrigger] = useState(0);
   const treeAnimationRef = useRef<number | null>(null);
+
+  // Local click count for animation speed
+  const [localClickCount, setLocalClickCount] = useState(0);
 
   // Render everything
   useEffect(() => {
@@ -244,8 +254,8 @@ export default function MiningGame({
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Increment click counter for animation speed scaling
-    setClickCount((prev) => prev + 1);
     setIsAnimating(true);
+    setLocalClickCount((prev) => prev + 1);
 
     // Create the leaf burst effect
     createLeafBurst();
@@ -255,6 +265,7 @@ export default function MiningGame({
 
     submitOptimisticTransaction();
     nonceQuery.incrementNonce();
+    incrementClickCount();
 
     // Play wood.wav audio
     const audio = new Audio("/wood-break.mp3");
@@ -350,7 +361,7 @@ export default function MiningGame({
               <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 {address ? (
                   <a
-                    href={`https://abscan.org/address/${address}`}
+                    href={`${chain.blockExplorers?.default.url}/address/${address}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
@@ -358,7 +369,7 @@ export default function MiningGame({
                       alignItems: "center",
                       color: "#5a4a1a",
                       opacity: 0.85,
-                      textDecoration: "none",
+                      textDecoration: "underline",
                       transition: "opacity 0.2s",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
@@ -399,8 +410,89 @@ export default function MiningGame({
           </div>
           <div
             className={styles.gameFrameThin}
-            style={{ minWidth: 440, minHeight: 140 }}
-          />
+            style={{
+              minWidth: 440,
+              minHeight: 72,
+              display: "flex",
+              alignItems: "center",
+              gap: 16,
+              padding: 20,
+            }}
+          >
+            <svg
+              width="36"
+              height="36"
+              viewBox="0 0 36 36"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              style={{ flexShrink: 0 }}
+            >
+              <rect x="6" y="14" width="24" height="8" rx="2" fill="#a86b2d" />
+              <rect
+                x="10"
+                y="10"
+                width="16"
+                height="16"
+                rx="2"
+                fill="#bfc98a"
+                stroke="#a86b2d"
+                strokeWidth="2"
+              />
+            </svg>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                flex: 1,
+                minWidth: 0,
+              }}
+            >
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: "#5a4a1a",
+                  fontSize: 18,
+                  lineHeight: 1,
+                }}
+              >
+                You&rsquo;ve Clicked
+              </span>
+              <span
+                style={{
+                  display: "flex",
+                  alignItems: "flex-end",
+                  gap: 4,
+                  color: "#5a4a1a",
+                  fontSize: 16,
+                  opacity: 0.85,
+                  marginTop: 2,
+                  minWidth: 60,
+                }}
+              >
+                {isClicksLoading ? (
+                  "Loading..."
+                ) : (
+                  <>
+                    <NumberTicker
+                      value={clickCount || 0}
+                      decimalPlaces={0}
+                      className="text-2xl font-bold"
+                    />
+                    <span
+                      style={{
+                        fontSize: 12,
+                        color: "#5a4a1a",
+                        opacity: 0.6,
+                        lineHeight: "1",
+                      }}
+                    >
+                      times
+                    </span>
+                  </>
+                )}
+              </span>
+            </div>
+          </div>
           <div
             className={styles.gameFrameThin}
             style={{ minWidth: 440, minHeight: 140 }}
@@ -427,7 +519,7 @@ export default function MiningGame({
                 canvasSize={280}
                 drawWidth={280}
                 drawHeight={280}
-                clickCount={clickCount}
+                clickCount={localClickCount}
                 style={{ width: "280px", height: "280px" }}
               />
               <canvas
