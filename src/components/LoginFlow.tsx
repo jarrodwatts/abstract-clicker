@@ -53,17 +53,31 @@ export default function LoginFlow() {
       className="w-full max-w-md mx-auto p-6 space-y-6 text-center flex flex-col items-center"
       style={{ minHeight: "350px" }}
     >
-      <h2 className="text-xl font-semibold mb-4">
-        {!address
-          ? "Welcome to the Mining Game"
-          : isSessionLoading
-          ? "Checking session status..."
-          : isCreatingSession || hasInitiatedSessionCreation
-          ? "Creating session..."
-          : "Create Session"}
-      </h2>
+      <div className="mb-2">
+        <h2
+          className={`font-semibold text-[#5a4a1a] ${
+            !address ? "text-2xl" : "text-xl"
+          }`}
+        >
+          {!address
+            ? "Axestract"
+            : isSessionLoading
+            ? "Checking session status..."
+            : isCreatingSession || hasInitiatedSessionCreation
+            ? "Creating session..."
+            : "Create Session"}
+        </h2>
+        {!address && (
+          <p className="text-[#5a4a1a] mt-2 opacity-80 whitespace-nowrap overflow-hidden text-ellipsis font-semibold">
+            A demo game showcasing Abstract&rsquo;s new realtime endpoint.
+          </p>
+        )}
+      </div>
 
-      <div className="flex justify-center" style={{ minHeight: "200px" }}>
+      <div
+        className="flex justify-center"
+        style={{ minHeight: "200px", height: "200px" }}
+      >
         <AnimationPreview
           character={character}
           action={
@@ -85,13 +99,13 @@ export default function LoginFlow() {
 
       <div className="w-full h-10">
         {!address && (
-          <Button
+          <button
             onClick={login}
             disabled={isWalletConnecting}
-            className="w-full"
+            className="w-full min-h-[48px] flex items-center justify-center gap-4 p-3 transition-colors bg-[#bfc98a] border-4 border-[#a86b2d] rounded-[32px] shadow-[12px_16px_32px_0_rgba(80,40,10,0.35)] relative cursor-pointer hover:bg-[#d4e0a0] hover:border-[#8b5a2b] hover:shadow-[8px_12px_24px_0_rgba(80,40,10,0.25)] disabled:opacity-50 disabled:cursor-not-allowed text-[#5a4a1a] font-bold"
           >
-            Connect Abstract Wallet
-          </Button>
+            Connect Abstract Global Wallet
+          </button>
         )}
 
         {/* Show create session button when needed */}
@@ -100,9 +114,12 @@ export default function LoginFlow() {
           !isCreatingSession &&
           !hasInitiatedSessionCreation &&
           !session && (
-            <Button onClick={handleCreateSession} className="w-full">
+            <button
+              onClick={handleCreateSession}
+              className="w-full min-h-[48px] flex items-center justify-center gap-4 p-3 transition-colors bg-[#bfc98a] border-4 border-[#a86b2d] rounded-[32px] shadow-[12px_16px_32px_0_rgba(80,40,10,0.35)] relative cursor-pointer hover:bg-[#d4e0a0] hover:border-[#8b5a2b] hover:shadow-[8px_12px_24px_0_rgba(80,40,10,0.25)] text-[#5a4a1a] font-bold"
+            >
               Create Session
-            </Button>
+            </button>
           )}
       </div>
     </div>

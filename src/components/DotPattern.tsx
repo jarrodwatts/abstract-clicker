@@ -10,7 +10,7 @@ export function DotPattern({ className }: DotPatternProps) {
   return (
     <svg
       className={cn(
-        "absolute inset-0 h-full w-full stroke-gray-900/10 [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]",
+        "absolute inset-0 h-full w-full stroke-gray-900/10 [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)] -z-100",
         className
       )}
     >
