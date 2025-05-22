@@ -5,13 +5,22 @@ import { renderNatureTile } from "@/utils/natureImages";
 import AnimationPreview from "@/components/AnimationPreview";
 import generateRandomCharacter from "@/lib/render-character/generateRandomCharacter";
 import Character from "@/types/Character";
+import useClickGasEstimate from "@/hooks/useClickGasEstimate";
+import useTransactionNonce from "@/hooks/useTransactionNonce";
+import { useAbstractSession } from "@/hooks/useAbstractSession";
+import { privateKeyToAccount } from "viem/accounts";
+import signClickTx, {
+  sendRawTransactionWithDetailedOutput,
+} from "@/lib/transaction/sendClickTx";
+import { useAccount } from "wagmi";
 
 export default function MiningGame({
   character: initialCharacter,
 }: {
   character?: Character;
 }) {
-  console.log(initialCharacter);
+  const { address } = useAccount();
+  const { data: sessionData } = useAbstractSession();
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -39,8 +48,10 @@ export default function MiningGame({
   }, []);
 
   const handleCanvasClick = () => {
-    console.log("Canvas clicked - mining action!");
     setIsAnimating(true);
+
+    submitOptimisticTransaction();
+    nonceQuery.incrementNonce();
 
     // Clear any existing timeout
     if (timeoutRef.current) {
@@ -53,6 +64,31 @@ export default function MiningGame({
       timeoutRef.current = null;
     }, 500);
   };
+
+  // Core game logic
+  const gasEstimateQuery = useClickGasEstimate();
+  const nonceQuery = useTransactionNonce();
+
+  async function submitOptimisticTransaction() {
+    const startTime = performance.now();
+
+    if (!address) throw new Error("No AGW address found");
+    if (!sessionData?.privateKey) throw new Error("No session signer found");
+    if (!gasEstimateQuery.data) throw new Error("No gas estimate found");
+    if (!nonceQuery.nonce) throw new Error("No nonce found");
+
+    const signer = privateKeyToAccount(sessionData.privateKey);
+
+    const result = await signClickTx(
+      address,
+      signer,
+      sessionData.session,
+      nonceQuery.nonce,
+      gasEstimateQuery.data
+    );
+
+    console.log(result);
+  }
 
   return (
     <>

@@ -53,7 +53,6 @@ export default function LoginFlow() {
       className="w-full max-w-md mx-auto p-6 space-y-6 text-center flex flex-col items-center"
       style={{ minHeight: "350px" }}
     >
-      {/* Header section - always present */}
       <h2 className="text-xl font-semibold mb-4">
         {!address
           ? "Welcome to the Mining Game"
@@ -64,7 +63,6 @@ export default function LoginFlow() {
           : "Create Session"}
       </h2>
 
-      {/* Animation container - always the same height */}
       <div className="flex justify-center" style={{ minHeight: "200px" }}>
         <AnimationPreview
           character={character}
@@ -85,9 +83,7 @@ export default function LoginFlow() {
         />
       </div>
 
-      {/* Button container - consistent height whether button is shown or not */}
       <div className="w-full h-10">
-        {/* Show login button when not connected */}
         {!address && (
           <Button
             onClick={login}

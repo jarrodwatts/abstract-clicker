@@ -29,8 +29,6 @@ export function useAbstractSession() {
     staleTime: Infinity,
   });
 
-  console.log(query.data);
-
   // Override the loading state to consider dependencies loading time
   return {
     ...query,
