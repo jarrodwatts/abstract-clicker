@@ -9,6 +9,7 @@ import {
   encodeAbiParameters,
   getTypesForEIP712Domain,
   Hex,
+  http,
   parseAbiParameters,
   toFunctionSelector,
 } from "viem";
@@ -53,6 +54,23 @@ export default async function signClickTx(
     chain,
     signer: sessionSigner,
     session,
+    transport: http(chain.rpcUrls.default.http[0], {
+      onFetchRequest(request) {
+        // Clone the request to read its body
+        const clonedRequest = request.clone();
+        clonedRequest.text().then((text) => {
+          const parsedBody = JSON.parse(text);
+          console.log(`JSON RPC Request sent to ${parsedBody.method}`);
+        });
+      },
+      onFetchResponse: async (response: Response) => {
+        // console.log("RPC Response received");
+        // // Clone the response to read its body
+        // const clonedResponse = response.clone();
+        // const body = await clonedResponse.json();
+        // console.log(body);
+      },
+    }),
   });
 
   // @ts-ignore
