@@ -16,7 +16,9 @@ export function drawCharacterLayers(
   character: Character,
   animationFrame: number,
   action: keyof typeof actions,
-  direction: keyof typeof directions
+  direction: keyof typeof directions,
+  drawWidth?: number,
+  drawHeight?: number
 ) {
   // Clear canvas before drawing new frame
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -58,10 +60,12 @@ export function drawCharacterLayers(
       characterProp.color * frameSize.x * actions[action].animationFrameLength;
     const spriteY = directionIndex * frameSize.y;
 
-    // Center the sprite in the canvas
+    // Use provided drawWidth/drawHeight or default to canvas size
     const drawSize = canvas.width;
-    const drawX = (canvas.width - drawSize) / 2;
-    const drawY = (canvas.height - drawSize) / 2;
+    const drawW = drawWidth || drawSize;
+    const drawH = drawHeight || drawSize;
+    const drawX = (canvas.width - drawW) / 2;
+    const drawY = (canvas.height - drawH) / 2;
 
     ctx.drawImage(
       image,
@@ -73,8 +77,8 @@ export function drawCharacterLayers(
       // Destination coordinates
       drawX,
       drawY,
-      drawSize,
-      drawSize
+      drawW,
+      drawH
     );
   });
 

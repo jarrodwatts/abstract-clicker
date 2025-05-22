@@ -15,7 +15,10 @@ interface AnimationCanvasProps {
   direction?: keyof typeof directions;
   isAnimating?: boolean;
   canvasSize?: number;
+  drawWidth?: number;
+  drawHeight?: number;
   clickCount?: number;
+  style?: React.CSSProperties;
 }
 
 const AnimationPreview: React.FC<AnimationCanvasProps> = ({
@@ -24,7 +27,10 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
   direction = "right",
   isAnimating = false,
   canvasSize = CANVAS_SIZE,
+  drawWidth,
+  drawHeight,
   clickCount = 0,
+  style,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -72,9 +78,20 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
       character,
       animationFrame,
       action,
-      direction
+      direction,
+      drawWidth,
+      drawHeight
     );
-  }, [layerImages, animationFrame, character, action, direction, isLoading]);
+  }, [
+    layerImages,
+    animationFrame,
+    character,
+    action,
+    direction,
+    isLoading,
+    drawWidth,
+    drawHeight,
+  ]);
 
   return (
     <canvas
@@ -82,6 +99,7 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
       width={canvasSize}
       height={canvasSize}
       className="z-20"
+      style={style}
     />
   );
 };

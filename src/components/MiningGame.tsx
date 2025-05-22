@@ -28,28 +28,112 @@ export default function MiningGame({
   );
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Simple tree growth animation
   useEffect(() => {
-    const renderTiles = async () => {
+    let animationFrameId: number | null = null;
+    let treeScale = 1;
+    let growing = false;
+    let animationProgress = 0;
+    const ANIMATION_DURATION = 0.5; // seconds
+    const MAX_SCALE = 1.15; // Maximum 15% growth
+
+    const renderTree = async (scale = 1) => {
       if (!canvasRef.current) return;
+      const ctx = canvasRef.current.getContext("2d");
+      if (!ctx) return;
 
-      try {
-        const ctx = canvasRef.current.getContext("2d");
-        if (!ctx) return;
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
 
-        // Render an Apple Tree scaled up to 100x100
-        await renderNatureTile(ctx, "Apple Tree", 0, 0, 240, 240);
-      } catch (error) {
-        console.error("Failed to render nature tiles", error);
+      // Save context, apply scaling transformation centered on tree, then restore
+      ctx.save();
+
+      // Scale from the center of the canvas
+      const centerX = canvasRef.current.width / 2;
+      const centerY = canvasRef.current.height / 2;
+
+      ctx.translate(centerX, centerY);
+      ctx.scale(scale, scale);
+      ctx.translate(-centerX, -centerY);
+
+      // Draw the tree centered in the canvas (instead of at 0,0)
+      // Calculate offset to center the 240x240 tree in a larger canvas
+      const offsetX = (canvasRef.current.width - 240) / 2;
+      const offsetY = (canvasRef.current.height - 240) / 2;
+      await renderNatureTile(ctx, "Apple Tree", offsetX, offsetY, 240, 240);
+
+      ctx.restore();
+    };
+
+    // Initial render
+    renderTree();
+
+    // Animation loop
+    const animate = (timestamp: number) => {
+      if (!growing && treeScale === 1) {
+        animationFrameId = null;
+        return;
+      }
+
+      // Calculate progress (0 to 1)
+      animationProgress += 1 / 60; // Assuming ~60fps
+
+      if (growing) {
+        // Growing phase (0 to MAX_SCALE)
+        treeScale =
+          1 +
+          (MAX_SCALE - 1) * Math.min(1, animationProgress / ANIMATION_DURATION);
+
+        if (animationProgress >= ANIMATION_DURATION) {
+          growing = false;
+          animationProgress = 0;
+        }
+      } else {
+        // Shrinking phase (MAX_SCALE to 1)
+        treeScale =
+          1 +
+          (MAX_SCALE - 1) *
+            (1 - Math.min(1, animationProgress / ANIMATION_DURATION));
+
+        if (animationProgress >= ANIMATION_DURATION) {
+          treeScale = 1;
+          animationProgress = 0;
+        }
+      }
+
+      renderTree(treeScale);
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    // Handle clicks
+    const handleTreeClick = () => {
+      growing = true;
+      animationProgress = 0;
+
+      if (!animationFrameId) {
+        animationFrameId = requestAnimationFrame(animate);
       }
     };
 
-    renderTiles();
+    // Attach click handler directly to canvas
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.addEventListener("click", handleTreeClick);
+    }
+
+    return () => {
+      if (canvas) {
+        canvas.removeEventListener("click", handleTreeClick);
+      }
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
   }, []);
 
-  const handleCanvasClick = () => {
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
     // Increment click counter for animation speed scaling
     setClickCount((prev) => prev + 1);
-
     setIsAnimating(true);
 
     submitOptimisticTransaction();
@@ -106,13 +190,16 @@ export default function MiningGame({
           character={character}
           isAnimating={isAnimating}
           canvasSize={240}
+          drawWidth={240}
+          drawHeight={240}
           clickCount={clickCount}
+          style={{ width: "240px", height: "240px" }}
         />
         <canvas
           ref={canvasRef}
-          width={240}
-          height={240}
-          className="-ml-15 z-10"
+          width={320}
+          height={320}
+          className="-ml-15 z-10 cursor-pointer"
           onClick={handleCanvasClick}
         />
       </div>
