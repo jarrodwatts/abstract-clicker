@@ -368,7 +368,7 @@ export default function MiningGame({
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4 mt-12 z-10">
+    <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4 mt:8 md:mt-12 z-10">
       {/* Game area (left + right columns) */}
       <div className="flex flex-col md:flex-row w-full gap-y-4 md:gap-y-0 md:gap-x-16 items-start">
         {/* Right column: main game area (order-1 on mobile) */}
@@ -534,7 +534,7 @@ export default function MiningGame({
               }}
             />
             <div className="flex flex-col flex-1 min-w-0 justify-center">
-              <span className="font-bold text-[#5a4a1a] text-lg leading-none mb-1">
+              <span className="font-bold text-[#5a4a1a] text-md leading-none mb-1">
                 Your Abstract Global Wallet
               </span>
               <span className="flex items-center gap-1.5">
@@ -610,7 +610,7 @@ export default function MiningGame({
               />
             </svg>
             <div className="flex flex-col flex-1 min-w-0 justify-center gap-1">
-              <span className="font-bold text-[#5a4a1a] text-lg leading-none">
+              <span className="font-bold text-[#5a4a1a] text-md leading-none">
                 You&rsquo;ve Clicked
               </span>
               <span className="flex items-end gap-1 text-[#5a4a1a] text-base opacity-85 mt-0.5 min-w-[60px]">
@@ -635,11 +635,11 @@ export default function MiningGame({
             className={`${styles.gameFrameThin} h-[478px] p-5 flex flex-col justify-start w-full`}
           >
             {/* Transaction Feed Header and List */}
-            <h3 className="text-lg font-semibold mb-4 text-[#5a4a1a]">
+            <h3 className="text-md font-semibold mb-4 text-[#5a4a1a]">
               Recent Transactions
             </h3>
-            <div className="flex items-center justify-between px-3 pb-4 text-[#5a4a1a] font-semibold text-[15px] border-b border-[#e0e0b2] mb-2">
-              <span>Transaction</span>
+            <div className="flex items-center justify-between px-3 pb-4 text-[#5a4a1a] font-semibold text-[14px] border-b border-[#e0e0b2] mb-2">
+              <span>Hash</span>
               <span className="flex items-center gap-1">
                 <span role="img" aria-label="stopwatch">
                   ⏱️
