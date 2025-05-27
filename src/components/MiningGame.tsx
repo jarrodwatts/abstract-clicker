@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import { NatureTileName, renderNatureTile } from "@/utils/natureImages";
-import AnimationPreview from "@/components/AnimationPreview";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import MiniMiningInstance from "./MiniMiningInstance";
+import TransactionMonitor from "./TransactionMonitor";
 import generateRandomCharacter from "@/lib/render-character/generateRandomCharacter";
 import Character from "@/types/Character";
 import useClickGasEstimate from "@/hooks/useClickGasEstimate";
@@ -17,6 +17,7 @@ import { chain } from "@/const/chain";
 import useUserClicks from "@/hooks/useUserClicks";
 import { NumberTicker } from "./magicui/number-ticker";
 import { AnimatedList } from "./magicui/animated-list";
+import { v4 as uuidv4 } from "uuid";
 
 // Types for weapon selection
 type AxeType =
@@ -50,28 +51,15 @@ const AXE_DISPLAY_NAMES: Record<AxeType, string> = {
   axe_pink: "Pink Axe",
 };
 
-// Types for leaf particle animation
-type Leaf = {
-  x: number;
-  y: number;
-  rotation: number;
-  scale: number;
-  velocityX: number;
-  velocityY: number;
-  angularVelocity: number;
-  type: string;
-  opacity: number;
-  gravity: number;
-};
-
-// Available leaf types for animation
-const LEAF_TYPES = [
-  "Apple Tree Leaf",
-  "Orange Tree Leaf",
-  "Birch Tree Leaf",
-  "Pine Tree Leaf",
-  "Pear Tree Leaf",
-];
+// Data structure for active mini-games
+interface ActiveMiniGame {
+  id: string;
+  character: Character; // Character state at the time of click
+  selectedAxe: AxeType; // Axe state at the time of click
+  initialClickCount: number; // click count for animation speed
+  txHash?: `0x${string}`; // Transaction hash, optional initially
+  status?: "pending" | "complete"; // To track if we are already monitoring/completed
+}
 
 export default function MiningGame({
   character: initialCharacter,
@@ -86,254 +74,50 @@ export default function MiningGame({
     incrementClickCount,
   } = useUserClicks();
 
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isAnimating, setIsAnimating] = useState(false);
   const [character, setCharacter] = useState(
     () => initialCharacter || generateRandomCharacter()
   );
   const [selectedAxe, setSelectedAxe] = useState<AxeType>("axe");
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Leaf animation system
-  const [leaves, setLeaves] = useState<Leaf[]>([]);
-  const animationFrameIdRef = useRef<number | null>(null);
-
-  // Tree animation state
-  const [treeScale, setTreeScale] = useState(1);
-  const [treeAnimationTrigger, setTreeAnimationTrigger] = useState(0);
-  const treeAnimationRef = useRef<number | null>(null);
-
-  // Local click count for animation speed
   const [localClickCount, setLocalClickCount] = useState(0);
-
-  // Transaction feed state
+  const [activeMiniGames, setActiveMiniGames] = useState<ActiveMiniGame[]>([]);
   const [transactions, setTransactions] = useState<
     Array<{ hash: `0x${string}`; timeTaken: number }>
   >([]);
 
-  // Render everything
-  useEffect(() => {
-    const renderCanvas = async () => {
-      if (!canvasRef.current) return;
-      const ctx = canvasRef.current.getContext("2d");
-      if (!ctx) return;
+  const handleGameAreaClick = () => {
+    const currentLocalClick = localClickCount + 1;
+    setLocalClickCount(currentLocalClick);
 
-      // Clear the canvas
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-
-      // Draw the tree with current scale
-      // Save context, apply scaling transformation centered on tree, then restore
-      ctx.save();
-
-      // Scale from the center of the canvas
-      const centerX = canvasRef.current.width / 2;
-      const centerY = canvasRef.current.height / 2;
-
-      ctx.translate(centerX, centerY);
-      ctx.scale(treeScale, treeScale);
-      ctx.translate(-centerX, -centerY);
-
-      // Draw the tree centered in the canvas
-      const offsetX = (canvasRef.current.width - 240) / 2;
-      const offsetY = (canvasRef.current.height - 240) / 2;
-      await renderNatureTile(ctx, "Apple Tree", offsetX, offsetY, 240, 240);
-
-      ctx.restore();
-
-      // Draw all active leaves on top of the tree
-      for (const leaf of leaves) {
-        ctx.save();
-        ctx.translate(leaf.x, leaf.y);
-        ctx.rotate(leaf.rotation);
-        ctx.scale(leaf.scale, leaf.scale);
-        ctx.globalAlpha = leaf.opacity;
-        await renderNatureTile(
-          ctx,
-          leaf.type as NatureTileName,
-          -15,
-          -15,
-          30,
-          30
-        );
-        ctx.restore();
-      }
+    const newMiniGameId = uuidv4(); // Generate unique ID once
+    const newMiniGame: ActiveMiniGame = {
+      id: newMiniGameId,
+      character: character,
+      selectedAxe: selectedAxe,
+      initialClickCount: currentLocalClick,
+      status: "pending",
     };
+    setActiveMiniGames((prevGames) => [...prevGames, newMiniGame]);
 
-    renderCanvas();
-  }, [treeScale, leaves]);
-
-  // Tree animation system
-  useEffect(() => {
-    // Cancel any existing animation
-    if (treeAnimationRef.current) {
-      cancelAnimationFrame(treeAnimationRef.current);
-    }
-
-    // Reset tree scale to 1 at the start
-    setTreeScale(1);
-
-    // Don't animate if trigger is 0 (initial state)
-    if (treeAnimationTrigger === 0) return;
-
-    const ANIMATION_DURATION = 30; // frames
-    const MAX_SCALE = 1.15;
-    let frame = 0;
-    let growing = true;
-
-    const animateTree = () => {
-      frame++;
-
-      if (growing) {
-        // Growing phase (0 to MAX_SCALE)
-        const progress = Math.min(1, frame / ANIMATION_DURATION);
-        setTreeScale(1 + (MAX_SCALE - 1) * progress);
-
-        if (frame >= ANIMATION_DURATION) {
-          growing = false;
-          frame = 0;
-        }
-      } else {
-        // Shrinking phase (MAX_SCALE to 1)
-        const progress = Math.min(1, frame / ANIMATION_DURATION);
-        setTreeScale(1 + (MAX_SCALE - 1) * (1 - progress));
-
-        if (frame >= ANIMATION_DURATION) {
-          setTreeScale(1);
-          return;
-        }
-      }
-
-      treeAnimationRef.current = requestAnimationFrame(animateTree);
-    };
-
-    // Start the animation immediately
-    treeAnimationRef.current = requestAnimationFrame(animateTree);
-
-    return () => {
-      if (treeAnimationRef.current) {
-        cancelAnimationFrame(treeAnimationRef.current);
-      }
-    };
-  }, [treeAnimationTrigger]);
-
-  // Update leaf positions every animation frame
-  useEffect(() => {
-    if (leaves.length === 0) return;
-
-    const updateLeafParticles = () => {
-      setLeaves((prevLeaves) => {
-        // Update each leaf's position and properties
-        const updatedLeaves = prevLeaves.map((leaf) => ({
-          ...leaf,
-          x: leaf.x + leaf.velocityX,
-          y: leaf.y + leaf.velocityY,
-          rotation: leaf.rotation + leaf.angularVelocity,
-          velocityX: leaf.velocityX * 0.95, // Apply air resistance
-          velocityY: (leaf.velocityY + leaf.gravity) * 0.95, // Apply gravity and air resistance
-          opacity: leaf.opacity * 0.99, // Fade out gradually
-        }));
-
-        // Remove leaves that are out of view or fully transparent
-        return updatedLeaves.filter(
-          (leaf) =>
-            leaf.opacity > 0.1 &&
-            leaf.x > -50 &&
-            leaf.x < canvasRef.current!.width + 50 &&
-            leaf.y > -50 &&
-            leaf.y < canvasRef.current!.height + 50
-        );
-      });
-
-      // Continue animation loop if there are still leaves
-      if (leaves.length > 0) {
-        animationFrameIdRef.current =
-          requestAnimationFrame(updateLeafParticles);
-      }
-    };
-
-    animationFrameIdRef.current = requestAnimationFrame(updateLeafParticles);
-
-    return () => {
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-      }
-    };
-  }, [leaves]);
-
-  // Create new leaf particles on click
-  const createLeafBurst = () => {
-    // Get the center of the tree (canvas)
-    const canvasWidth = canvasRef.current?.width || 320;
-    const canvasHeight = canvasRef.current?.height || 320;
-    const centerX = canvasWidth / 2;
-    const centerY = canvasHeight / 2;
-
-    // Create 5-8 leaves with random properties (reduced from 8-12)
-    const numLeaves = 5 + Math.floor(Math.random() * 4);
-    const newLeaves: Leaf[] = [];
-
-    for (let i = 0; i < numLeaves; i++) {
-      // Random angle for the burst direction
-      const angle = Math.random() * Math.PI * 2;
-
-      // Random speed between 4-8
-      const speed = 4 + Math.random() * 4;
-
-      // Create the leaf particle
-      newLeaves.push({
-        x: centerX,
-        y: centerY,
-        rotation: Math.random() * Math.PI * 2,
-        scale: 0.3 + Math.random() * 0.3,
-        velocityX: Math.cos(angle) * speed,
-        velocityY: Math.sin(angle) * speed,
-        angularVelocity: (Math.random() - 0.5) * 0.2,
-        type: LEAF_TYPES[Math.floor(Math.random() * LEAF_TYPES.length)],
-        opacity: 0.8 + Math.random() * 0.2,
-        gravity: 0.05 + Math.random() * 0.05,
-      });
-    }
-
-    // Add new leaves to the existing ones
-    setLeaves((prevLeaves) => [...prevLeaves, ...newLeaves]);
-  };
-
-  const handleCanvasClick = () => {
-    // Increment click counter for animation speed scaling
-    setIsAnimating(true);
-    setLocalClickCount((prev) => prev + 1);
-
-    // Create the leaf burst effect
-    createLeafBurst();
-
-    // Trigger tree animation by incrementing the trigger counter
-    setTreeAnimationTrigger((prev) => prev + 1);
-
-    submitOptimisticTransaction();
+    // Pass newMiniGameId to submitOptimisticTransaction so it can update the specific game
+    submitOptimisticTransaction(newMiniGameId);
     nonceQuery.incrementNonce();
     incrementClickCount();
 
-    // Play wood.wav audio
     const audio = new Audio("/wood-break.mp3");
     audio.play();
-
-    // Clear any existing timeout
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-    }
-
-    // Set a new timeout
-    timeoutRef.current = setTimeout(() => {
-      setIsAnimating(false);
-      timeoutRef.current = null;
-    }, 500);
   };
 
-  // Core game logic
+  const handleMiniGameComplete = useCallback((idToRemove: string) => {
+    setActiveMiniGames((prevGames) =>
+      prevGames.filter((game) => game.id !== idToRemove)
+    );
+  }, []);
+
   const gasEstimateQuery = useClickGasEstimate();
   const nonceQuery = useTransactionNonce();
 
-  async function submitOptimisticTransaction() {
+  async function submitOptimisticTransaction(gameId: string) {
+    // Accept gameId
     if (!address) throw new Error("No AGW address found");
     if (!sessionData?.privateKey) throw new Error("No session signer found");
     if (!gasEstimateQuery.data) throw new Error("No gas estimate found");
@@ -346,10 +130,15 @@ export default function MiningGame({
       signer,
       sessionData.session,
       nonceQuery.nonce
-      // gasEstimateQuery.data
     );
 
-    // Add transaction to the feed
+    // Update the specific mini-game instance with its transaction hash
+    setActiveMiniGames((prevGames) =>
+      prevGames.map((game) =>
+        game.id === gameId ? { ...game, txHash: txHash } : game
+      )
+    );
+
     setTransactions((prev) =>
       [
         {
@@ -358,10 +147,9 @@ export default function MiningGame({
         },
         ...prev,
       ].slice(0, 10)
-    ); // Keep last 10 transactions
+    );
   }
 
-  // Helper function to check if an axe is unlocked
   const isAxeUnlocked = (axeType: AxeType): boolean => {
     if (!clickCount) return axeType === "axe";
     return clickCount >= AXE_UNLOCK_THRESHOLDS[axeType];
@@ -369,35 +157,50 @@ export default function MiningGame({
 
   return (
     <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4 mt:8 md:mt-12 z-10">
-      {/* Game area (left + right columns) */}
       <div className="flex flex-col md:flex-row w-full gap-y-4 md:gap-y-0 md:gap-x-16 items-start">
-        {/* Right column: main game area (order-1 on mobile) */}
         <div className="flex flex-col items-center w-full md:w-1/2 gap-1 order-1 md:order-none">
-          <div className={`${styles.gameFrame} w-full`}>
-            <div
-              className="flex flex-row cursor-pointer w-full justify-center"
-              onClick={handleCanvasClick}
-            >
-              <AnimationPreview
-                action={"axe"}
-                character={character}
-                isAnimating={isAnimating}
-                canvasSize={280}
-                drawWidth={280}
-                drawHeight={280}
-                clickCount={localClickCount}
-                style={{ width: "100%", maxWidth: 280, maxHeight: 280 }}
-                axeType={selectedAxe}
+          <div
+            id="mini-game-spawn-area"
+            className={`${styles.gameFrame} w-full min-h-[100px] flex flex-row flex-wrap gap-2 p-2 justify-center items-center cursor-pointer`}
+            onClick={handleGameAreaClick}
+          >
+            {activeMiniGames.length === 0 && (
+              <div className="text-center text-gray-500 p-4">
+                Click here to start mining!
+              </div>
+            )}
+            {activeMiniGames.map((game) => (
+              <MiniMiningInstance
+                key={game.id}
+                id={game.id}
+                character={game.character}
+                selectedAxe={game.selectedAxe}
+                initialClickCount={game.initialClickCount}
+                onComplete={handleMiniGameComplete}
+                instanceCanvasSize={64}
               />
-              <canvas
-                ref={canvasRef}
-                width={320}
-                height={320}
-                className="-ml-32 z-10 w-full max-w-[320px] h-auto"
-              />
-            </div>
+            ))}
+            {activeMiniGames.map((game) => {
+              if (game.txHash && game.status === "pending") {
+                return (
+                  <TransactionMonitor
+                    key={`monitor-${game.id}`}
+                    txHash={game.txHash}
+                    chainId={chain.id}
+                    onCompletion={() => {
+                      setActiveMiniGames((prev) =>
+                        prev.map((g) =>
+                          g.id === game.id ? { ...g, status: "complete" } : g
+                        )
+                      );
+                      handleMiniGameComplete(game.id);
+                    }}
+                  />
+                );
+              }
+              return null;
+            })}
           </div>
-          {/* New Character Button */}
           <button
             onClick={() => setCharacter(generateRandomCharacter())}
             className="w-full min-h-[48px] flex items-center gap-4 p-3 text-left transition-colors bg-[#bfc98a] border-4 border-[#a86b2d] rounded-[32px] shadow-[12px_16px_32px_0_rgba(80,40,10,0.35)] relative cursor-pointer mt-2 hover:bg-[#d4e0a0] hover:border-[#8b5a2b] hover:shadow-[8px_12px_24px_0_rgba(80,40,10,0.25)]"
@@ -424,13 +227,11 @@ export default function MiningGame({
             </span>
           </button>
 
-          {/* Axe Selection Grid */}
           <div className="w-full mt-4">
             <h3 className="font-bold text-[#5a4a1a] text-base mb-2">
               Select Axe
             </h3>
             <div className="grid grid-cols-3 gap-2">
-              {/* First Row */}
               {(["axe_wood", "axe_copper", "axe_silver"] as AxeType[]).map(
                 (axeType) => (
                   <button
@@ -453,7 +254,7 @@ export default function MiningGame({
                         className="w-[32px] h-[32px] transform scale-[3.125] translate-x-[-8px] translate-y-[8px]"
                         style={{
                           backgroundImage: `url(/animations/axe/e-tool/${axeType}.png)`,
-                          backgroundPosition: `-32px -64px` /* Column 2, Row 3 (axe facing right) */,
+                          backgroundPosition: `-32px -64px`,
                           backgroundSize: `160px 128px`,
                           imageRendering: "pixelated",
                         }}
@@ -472,8 +273,6 @@ export default function MiningGame({
                   </button>
                 )
               )}
-
-              {/* Second Row */}
               {(["axe_gold", "axe_blue", "axe_pink"] as AxeType[]).map(
                 (axeType) => (
                   <button
@@ -496,7 +295,7 @@ export default function MiningGame({
                         className="w-[32px] h-[32px] transform scale-[3.125] translate-x-[-8px] translate-y-[2px]"
                         style={{
                           backgroundImage: `url(/animations/axe/e-tool/${axeType}.png)`,
-                          backgroundPosition: `-32px -64px` /* Column 2, Row 3 (axe facing right) */,
+                          backgroundPosition: `-32px -64px`,
                           backgroundSize: `160px 128px`,
                           imageRendering: "pixelated",
                         }}
@@ -518,7 +317,6 @@ export default function MiningGame({
             </div>
           </div>
         </div>
-        {/* Left column: three stacked boxes (order-2 on mobile) */}
         <div className="flex flex-col gap-4 w-full md:w-1/2 order-2 md:order-none">
           <div
             className={`${styles.gameFrameThin} min-h-[72px] flex flex-row items-center gap-4 w-full`}
@@ -634,7 +432,6 @@ export default function MiningGame({
           <div
             className={`${styles.gameFrameThin} h-[478px] p-5 flex flex-col justify-start w-full`}
           >
-            {/* Transaction Feed Header and List */}
             <h3 className="text-md font-semibold mb-4 text-[#5a4a1a]">
               Recent Transactions
             </h3>
@@ -675,7 +472,6 @@ export default function MiningGame({
           </div>
         </div>
       </div>
-      {/* Hide scrollbar utility for transaction feed */}
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

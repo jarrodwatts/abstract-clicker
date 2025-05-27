@@ -19,11 +19,10 @@ export function drawCharacterLayers(
   direction: keyof typeof directions,
   drawWidth?: number,
   drawHeight?: number,
-  toolImage?: HTMLImageElement | null
+  toolImage?: HTMLImageElement | null,
+  destinationX?: number,
+  destinationY?: number
 ) {
-  // Clear canvas before drawing new frame
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
   // Apply clipping to prevent adjacent frames from showing
   const clipSize = Math.min(canvas.width, canvas.height);
   const clipX = (canvas.width - clipSize) / 2;
@@ -65,8 +64,10 @@ export function drawCharacterLayers(
     const drawSize = canvas.width;
     const drawW = drawWidth || drawSize;
     const drawH = drawHeight || drawSize;
-    const drawX = (canvas.width - drawW) / 2;
-    const drawY = (canvas.height - drawH) / 2;
+    const drawX =
+      destinationX !== undefined ? destinationX : (canvas.width - drawW) / 2;
+    const drawY =
+      destinationY !== undefined ? destinationY : (canvas.height - drawH) / 2;
 
     ctx.drawImage(
       image,
@@ -97,8 +98,10 @@ export function drawCharacterLayers(
     const drawSize = canvas.width;
     const drawW = drawWidth || drawSize;
     const drawH = drawHeight || drawSize;
-    const drawX = (canvas.width - drawW) / 2;
-    const drawY = (canvas.height - drawH) / 2;
+    const drawX =
+      destinationX !== undefined ? destinationX : (canvas.width - drawW) / 2;
+    const drawY =
+      destinationY !== undefined ? destinationY : (canvas.height - drawH) / 2;
 
     ctx.drawImage(
       toolImage,
