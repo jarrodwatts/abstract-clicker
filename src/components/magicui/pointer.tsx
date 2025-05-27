@@ -29,6 +29,7 @@ PointerProps): JSX.Element {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const [isActive, setIsActive] = useState<boolean>(false);
+  const [isClicked, setIsClicked] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -54,15 +55,27 @@ PointerProps): JSX.Element {
           setIsActive(false);
         };
 
+        const handlePointerDown = () => {
+          setIsClicked(true);
+        };
+
+        const handlePointerUp = () => {
+          setIsClicked(false);
+        };
+
         parentElement.addEventListener("mousemove", handleMouseMove);
         parentElement.addEventListener("mouseenter", handleMouseEnter);
         parentElement.addEventListener("mouseleave", handleMouseLeave);
+        parentElement.addEventListener("pointerdown", handlePointerDown);
+        parentElement.addEventListener("pointerup", handlePointerUp);
 
         return () => {
           parentElement.style.cursor = "";
           parentElement.removeEventListener("mousemove", handleMouseMove);
           parentElement.removeEventListener("mouseenter", handleMouseEnter);
           parentElement.removeEventListener("mouseleave", handleMouseLeave);
+          parentElement.removeEventListener("pointerdown", handlePointerDown);
+          parentElement.removeEventListener("pointerup", handlePointerUp);
         };
       }
     }
@@ -74,10 +87,12 @@ PointerProps): JSX.Element {
       <AnimatePresence>
         {isActive && (
           <motion.div
-            className="transform-[translate(-50%,-50%)] pointer-events-none fixed z-50"
+            className="-translate-y-full origin-bottom-right pointer-events-none fixed z-50"
             style={{
               top: y,
               left: x,
+              rotate: `-${isClicked ? 40 : 0}deg`,
+              transition: "rotate 250ms ease-in-out",
               ...style,
             }}
             initial={{
