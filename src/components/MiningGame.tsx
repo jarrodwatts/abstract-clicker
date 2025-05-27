@@ -16,6 +16,8 @@ import Image from "next/image";
 import { chain } from "@/const/chain";
 import useUserClicks from "@/hooks/useUserClicks";
 import { NumberTicker } from "./magicui/number-ticker";
+import { Ripple } from "./magicui/ripple";
+import { Pointer } from "./magicui/pointer";
 import { v4 as uuidv4 } from "uuid";
 import LumberjackDisplayCard from "./LumberjackDisplayCard";
 
@@ -31,6 +33,16 @@ interface ActiveLumberjack extends LumberjackTier {
   lumberjackId: string; // Unique ID for this specific instance of an unlocked lumberjack
   character: Character; // The visual representation
   timerId?: NodeJS.Timeout; // To store the interval timer
+}
+
+// New interface for bursting wood emojis
+interface BurstingWoodEmoji {
+  id: string;
+  x: number; // viewport X
+  y: number; // viewport Y
+  randomOffsetX: number;
+  randomOffsetY: number;
+  randomRotation: number;
 }
 
 // Lumberjack Tiers Configuration
@@ -116,6 +128,9 @@ export default function MiningGame({
   const isAutoClickProcessingRef = useRef(false);
 
   const [pulseClickCount, setPulseClickCount] = useState(false);
+  const [burstingWoodEmojis, setBurstingWoodEmojis] = useState<
+    BurstingWoodEmoji[]
+  >([]); // New state for emojis
 
   // Refs for height synchronization
   const leftColumnRef = useRef<HTMLDivElement>(null);
@@ -306,7 +321,7 @@ export default function MiningGame({
     };
   }, [unlockedLumberjacks]);
 
-  const handleGameAreaClick = () => {
+  const handleGameAreaClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const currentLocalClick = localClickCount + 1;
     setLocalClickCount(currentLocalClick);
 
@@ -336,6 +351,30 @@ export default function MiningGame({
 
     const audio = new Audio("/wood-break.mp3");
     audio.play();
+
+    // Emoji burst logic
+    const numEmojisToSpawn = 3;
+    const newEmojis: BurstingWoodEmoji[] = [];
+    for (let i = 0; i < numEmojisToSpawn; i++) {
+      newEmojis.push({
+        id: uuidv4(),
+        x: event.clientX,
+        y: event.clientY,
+        randomOffsetX: (Math.random() - 0.5) * 150, // Spread distance
+        randomOffsetY: (Math.random() - 0.5) * 150, // Spread distance
+        randomRotation: (Math.random() - 0.5) * 90, // Random final tilt
+      });
+    }
+
+    setBurstingWoodEmojis((prevEmojis) => [...prevEmojis, ...newEmojis]);
+
+    setTimeout(() => {
+      setBurstingWoodEmojis((prevEmojis) =>
+        prevEmojis.filter(
+          (emoji) => !newEmojis.some((ne) => ne.id === emoji.id)
+        )
+      );
+    }, 1000); // Animation duration in ms
   };
 
   async function submitOptimisticTransaction(
@@ -462,14 +501,22 @@ export default function MiningGame({
           {" "}
           {/* order-1 for mobile and md */}
           {/* Item 2: Click Area (Moved Here) */}
-          <div
-            id="mini-game-spawn-area"
-            onClick={handleGameAreaClick}
-            className={`${styles.gameFrame} w-full h-50 md:h-70 flex items-center justify-center cursor-pointer bg-green-100 hover:bg-green-200 transition-colors`}
-          >
-            <span className="text-2xl font-bold text-green-700 select-none">
-              CLICK TO MINE!
-            </span>
+          <div className="relative">
+            {" "}
+            {/* New wrapper for Pointer to target */}
+            <Pointer>
+              <span style={{ fontSize: "64px" }}>🪓</span>
+            </Pointer>
+            <div
+              id="mini-game-spawn-area"
+              onClick={handleGameAreaClick}
+              className={`${styles.gameFrame} relative w-full h-50 md:h-70 flex items-center justify-center cursor-none hover:cursor-none bg-green-100 hover:bg-green-200 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-lg active:scale-95 overflow-hidden`}
+            >
+              <Ripple />
+              <span className="text-2xl font-bold text-green-700 select-none z-10">
+                CLICK TO CHOP!
+              </span>
+            </div>
           </div>
           {/* Item 2: Your Wallet Info (Moved Here) */}
           <div
@@ -683,7 +730,7 @@ export default function MiningGame({
               <div className="flex-1 flex items-center justify-center text-center text-[#5a4a1a]/70 p-4">
                 <p className="text-lg">
                   No trees felled yet! Get to choppin&apos; by clicking
-                  &apos;CLICK TO MINE!&apos;
+                  &apos;CLICK TO CHOP!&apos;
                   <br />
                   Your mighty swings (transactions) will appear here.
                 </p>
@@ -721,12 +768,57 @@ export default function MiningGame({
             background-color: #b45309;
             border-radius: 4px;
           }
-          .scrollbar-track-amber-200\\/50::-webkit-scrollbar-track {
+          .scrollbar-track-amber-200\/50::-webkit-scrollbar-track {
             background-color: rgba(253, 230, 138, 0.5);
             border-radius: 4px;
           }
+
+          /* New styles for wood burst effect */
+          .wood-burst-emoji {
+            /* Apply initial transform to center emoji on cursor */
+            transform: translate(-50%, -50%);
+            animation: burstOutEffect 1s ease-out forwards;
+            will-change: transform, opacity; /* Hint for browser optimization */
+          }
+
+          @keyframes burstOutEffect {
+            0% {
+              transform: translate(-50%, -50%) scale(1.2); /* Start centered and slightly larger */
+              opacity: 1;
+            }
+            100% {
+              /* Move to offset, shrink, rotate, and fade out */
+              transform: translate(
+                  calc(-50% + var(--offsetX)),
+                  calc(-50% + var(--offsetY))
+                )
+                scale(0.3) rotate(var(--rotation));
+              opacity: 0;
+            }
+          }
         `}
       </style>
+      {/* Render bursting wood emojis */}
+      {burstingWoodEmojis.map((emoji) => (
+        <div
+          key={emoji.id}
+          className="wood-burst-emoji"
+          style={{
+            position: "fixed",
+            left: `${emoji.x}px`,
+            top: `${emoji.y}px`,
+            pointerEvents: "none",
+            zIndex: 9999, // Ensure emojis are on top
+            fontSize: "24px", // Size of the emoji
+            // CSS variables for dynamic animation properties
+            ["--offsetX" as any]: `${emoji.randomOffsetX}px`,
+            ["--offsetY" as any]: `${emoji.randomOffsetY}px`,
+            ["--rotation" as any]: `${emoji.randomRotation}deg`,
+          }}
+        >
+          🪵
+        </div>
+      ))}
     </div>
   );
 }
