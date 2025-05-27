@@ -38,19 +38,6 @@ const actions = {
       ySpace: 0,
     },
   },
-  idle: {
-    name: "idle",
-    actionName: "idling",
-    path: `idle`,
-    suffix: "idle",
-    animationFrameLength: 1,
-    frameSize: {
-      x: 32,
-      y: 32,
-      xSpace: 0,
-      ySpace: 0,
-    },
-  },
   die: {
     name: "die",
     actionName: "dying",

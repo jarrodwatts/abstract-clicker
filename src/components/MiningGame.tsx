@@ -17,41 +17,66 @@ import { chain } from "@/const/chain";
 import useUserClicks from "@/hooks/useUserClicks";
 import { NumberTicker } from "./magicui/number-ticker";
 import { v4 as uuidv4 } from "uuid";
+import LumberjackDisplayCard from "./LumberjackDisplayCard";
 
-// Types for weapon selection
-type AxeType =
-  | "axe"
-  | "axe_copper"
-  | "axe_silver"
-  | "axe_gold"
-  | "axe_blue"
-  | "axe_pink";
+// New Types for Lumberjacks
+interface LumberjackTier {
+  unlockThreshold: number;
+  clickIntervalMs: number;
+  displayName: string;
+  id: string; // Unique ID for the tier
+}
 
-// Axe unlock thresholds
-const AXE_UNLOCK_THRESHOLDS: Record<AxeType, number> = {
-  axe: 0,
-  axe_copper: 500,
-  axe_silver: 1000,
-  axe_gold: 5000,
-  axe_blue: 10000,
-  axe_pink: 100000,
-};
+interface ActiveLumberjack extends LumberjackTier {
+  lumberjackId: string; // Unique ID for this specific instance of an unlocked lumberjack
+  character: Character; // The visual representation
+  timerId?: NodeJS.Timeout; // To store the interval timer
+}
 
-// Axe display names
-const AXE_DISPLAY_NAMES: Record<AxeType, string> = {
-  axe: "Basic Axe",
-  axe_copper: "Copper Axe",
-  axe_silver: "Silver Axe",
-  axe_gold: "Gold Axe",
-  axe_blue: "Blue Axe",
-  axe_pink: "Pink Axe",
-};
+// Lumberjack Tiers Configuration
+const LUMBERJACK_TIERS: LumberjackTier[] = [
+  {
+    id: "tier1",
+    unlockThreshold: 100,
+    clickIntervalMs: 10000,
+    displayName: "Rookie Logger",
+  },
+  {
+    id: "tier2",
+    unlockThreshold: 500,
+    clickIntervalMs: 8000,
+    displayName: "Apprentice Sawyer",
+  },
+  {
+    id: "tier3",
+    unlockThreshold: 2000,
+    clickIntervalMs: 5000,
+    displayName: "Journeyman Feller",
+  },
+  {
+    id: "tier4",
+    unlockThreshold: 10000,
+    clickIntervalMs: 2000,
+    displayName: "Master Timberman",
+  },
+  {
+    id: "tier5",
+    unlockThreshold: 50000,
+    clickIntervalMs: 1000,
+    displayName: "Forest Whisperer",
+  },
+  {
+    id: "tier6",
+    unlockThreshold: 100000,
+    clickIntervalMs: 500,
+    displayName: "Legendary Woodcutter",
+  },
+];
 
 // Data structure for active mini-games
 interface ActiveMiniGame {
   id: string;
   character: Character;
-  selectedAxe: AxeType;
   initialClickCount: number;
   txHash?: `0x${string}`;
   uiState: "submitting" | "optimistic" | "confirmed" | "failed";
@@ -77,9 +102,18 @@ export default function MiningGame({
   const [character, setCharacter] = useState(
     () => initialCharacter || generateRandomCharacter()
   );
-  const [selectedAxe, setSelectedAxe] = useState<AxeType>("axe");
   const [localClickCount, setLocalClickCount] = useState(0);
   const [activeMiniGames, setActiveMiniGames] = useState<ActiveMiniGame[]>([]);
+  const [unlockedLumberjacks, setUnlockedLumberjacks] = useState<
+    ActiveLumberjack[]
+  >([]);
+  const lumberjackTimersRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const unlockedLumberjacksRef = useRef(unlockedLumberjacks);
+  const clickCountRef = useRef(clickCount);
+  const performAutoClickRef = useRef<((id: string) => Promise<void>) | null>(
+    null
+  );
+  const isAutoClickProcessingRef = useRef(false);
 
   const [pulseClickCount, setPulseClickCount] = useState(false);
 
@@ -115,40 +149,212 @@ export default function MiningGame({
     };
   }, [activeMiniGames.length]); // Re-run if the number of games changes, or on mount/unmount
 
+  // Keep unlockedLumberjacksRef updated
+  useEffect(() => {
+    unlockedLumberjacksRef.current = unlockedLumberjacks;
+  }, [unlockedLumberjacks]);
+
+  // Keep clickCountRef updated
+  useEffect(() => {
+    clickCountRef.current = clickCount;
+  }, [clickCount]);
+
+  // Effect to unlock lumberjacks based on clickCount
+  useEffect(() => {
+    if (typeof clickCount === "number") {
+      const newlyUnlocked = LUMBERJACK_TIERS.filter(
+        (tier) =>
+          clickCount >= tier.unlockThreshold &&
+          !unlockedLumberjacks.some((lj) => lj.id === tier.id)
+      );
+
+      if (newlyUnlocked.length > 0) {
+        const newLumberjacks: ActiveLumberjack[] = newlyUnlocked.map(
+          (tier) => ({
+            ...tier,
+            lumberjackId: uuidv4(),
+            character: generateRandomCharacter(), // Each lumberjack gets a unique character
+          })
+        );
+        setUnlockedLumberjacks((prev) => [...prev, ...newLumberjacks]);
+      }
+    }
+  }, [clickCount, unlockedLumberjacks]);
+
+  const gasEstimateQuery = useClickGasEstimate();
+  const nonceQuery = useTransactionNonce();
+
+  const performAutoClick = useCallback(
+    async (lumberjackId: string) => {
+      if (isAutoClickProcessingRef.current) {
+        console.warn(
+          `[AutoClick] Skipped for ${lumberjackId}: Another auto-click is already in progress.`
+        );
+        return;
+      }
+
+      isAutoClickProcessingRef.current = true;
+      try {
+        const lumberjack = unlockedLumberjacksRef.current.find(
+          (lj) => lj.lumberjackId === lumberjackId
+        );
+
+        if (!lumberjack) {
+          console.warn(
+            `[AutoClick] Lumberjack with ID ${lumberjackId} not found in ref. Skipping autoclick.`
+          );
+          return;
+        }
+
+        if (!address || !sessionData?.privateKey || !gasEstimateQuery.data) {
+          console.warn(
+            `[AutoClick] Core prerequisites (address, session, gas estimate) not met for lumberjack ${lumberjack.displayName}. Skipping autoclick.`
+          );
+          return;
+        }
+
+        if (nonceQuery.nonce === undefined) {
+          console.warn(
+            `[AutoClick] Nonce is not yet initialized for lumberjack ${lumberjack.displayName}. Skipping autoclick this cycle.`
+          );
+          return;
+        }
+
+        console.log(
+          `[AutoClick] Triggered by: ${lumberjack.displayName} (Lumberjack ID: ${lumberjack.lumberjackId}) for click number around ${clickCountRef.current}`,
+          { character: lumberjack.character }
+        );
+
+        incrementClickCount();
+        const nonceForThisTx = nonceQuery.incrementNonce();
+
+        const newMiniGameId = uuidv4();
+        const newMiniGame: ActiveMiniGame = {
+          id: newMiniGameId,
+          character: lumberjack.character,
+          initialClickCount: clickCountRef.current ?? 0,
+          uiState: "submitting",
+          clickTimestamp: Date.now(),
+          isVisuallyRemoving: false,
+        };
+        setActiveMiniGames((prevGames) =>
+          [newMiniGame, ...prevGames].slice(0, 50)
+        );
+        await submitOptimisticTransaction(
+          newMiniGameId,
+          lumberjack.character,
+          nonceForThisTx
+        );
+      } catch (error) {
+        console.error(
+          `[AutoClick] Unhandled error during performAutoClick for ${lumberjackId}:`,
+          error
+        );
+      } finally {
+        isAutoClickProcessingRef.current = false;
+      }
+    },
+    [
+      address,
+      sessionData,
+      gasEstimateQuery.data,
+      nonceQuery,
+      incrementClickCount,
+      submitOptimisticTransaction,
+    ]
+  );
+
+  // Keep performAutoClickRef updated with the latest performAutoClick function
+  useEffect(() => {
+    performAutoClickRef.current = performAutoClick;
+  }, [performAutoClick]);
+
+  // Effect to manage lumberjack autoclick intervals
+  useEffect(() => {
+    const currentTimers = lumberjackTimersRef.current;
+    const activeLumberjackIds = new Set(
+      unlockedLumberjacksRef.current.map((lj) => lj.lumberjackId)
+    );
+
+    Object.keys(currentTimers).forEach((timerLumberjackId) => {
+      if (!activeLumberjackIds.has(timerLumberjackId)) {
+        clearInterval(currentTimers[timerLumberjackId]);
+        delete currentTimers[timerLumberjackId];
+      }
+    });
+
+    unlockedLumberjacksRef.current.forEach((lj) => {
+      if (currentTimers[lj.lumberjackId]) {
+        clearInterval(currentTimers[lj.lumberjackId]);
+      }
+
+      const idForThisInterval = lj.lumberjackId;
+      const intervalMsForThisInterval = lj.clickIntervalMs;
+
+      currentTimers[idForThisInterval] = setInterval(() => {
+        if (performAutoClickRef.current) {
+          performAutoClickRef.current(idForThisInterval);
+        }
+      }, intervalMsForThisInterval);
+    });
+
+    return () => {
+      Object.values(lumberjackTimersRef.current).forEach((timerId) =>
+        clearInterval(timerId)
+      );
+      lumberjackTimersRef.current = {};
+    };
+  }, [unlockedLumberjacks]);
+
   const handleGameAreaClick = () => {
     const currentLocalClick = localClickCount + 1;
     setLocalClickCount(currentLocalClick);
+
+    // Ensure nonce is initialized before trying to increment it
+    if (nonceQuery.nonce === undefined) {
+      console.warn(
+        "[ManualClick] Nonce is not yet initialized. Please wait and try again."
+      );
+      // Optionally, provide user feedback here, e.g., a toast message
+      return;
+    }
+
+    const nonceForThisTx = nonceQuery.incrementNonce();
+    incrementClickCount();
 
     const newMiniGameId = uuidv4();
     const newMiniGame: ActiveMiniGame = {
       id: newMiniGameId,
       character: character,
-      selectedAxe: selectedAxe,
       initialClickCount: currentLocalClick,
       uiState: "submitting",
       clickTimestamp: Date.now(),
       isVisuallyRemoving: false,
     };
     setActiveMiniGames((prevGames) => [newMiniGame, ...prevGames]);
-    submitOptimisticTransaction(newMiniGameId);
-    nonceQuery.incrementNonce();
-    incrementClickCount();
+    submitOptimisticTransaction(newMiniGameId, character, nonceForThisTx);
 
     const audio = new Audio("/wood-break.mp3");
     audio.play();
   };
 
-  const gasEstimateQuery = useClickGasEstimate();
-  const nonceQuery = useTransactionNonce();
-
-  async function submitOptimisticTransaction(gameId: string) {
+  async function submitOptimisticTransaction(
+    gameId: string,
+    clickerCharacter: Character,
+    nonceForTx: number
+  ) {
     if (
       !address ||
       !sessionData?.privateKey ||
       !gasEstimateQuery.data ||
-      !nonceQuery.nonce
+      nonceForTx === undefined
     ) {
-      console.error("Transaction pre-requisites not met");
+      console.error("Transaction pre-requisites not met", {
+        address,
+        hasSessionPrivateKey: !!sessionData?.privateKey,
+        hasGasEstimate: !!gasEstimateQuery.data,
+        nonceForTx,
+      });
       setActiveMiniGames((prev) =>
         prev.map((g) =>
           g.id === gameId
@@ -182,7 +388,7 @@ export default function MiningGame({
         address,
         signer,
         sessionData.session,
-        nonceQuery.nonce
+        nonceForTx
       );
       setActiveMiniGames((prevGames) =>
         prevGames.map((game) =>
@@ -225,11 +431,6 @@ export default function MiningGame({
       }, FADE_START_DELAY + FADE_DURATION);
     }
   }
-
-  const isAxeUnlocked = (axeType: AxeType): boolean => {
-    if (!clickCount) return axeType === "axe";
-    return clickCount >= AXE_UNLOCK_THRESHOLDS[axeType];
-  };
 
   return (
     <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4 md:pt-8 z-10">
@@ -332,48 +533,71 @@ export default function MiningGame({
             {" "}
             {/* Adjusted margin from mt-4 */}
             <h3 className="font-bold text-[#5a4a1a] text-base mb-2">
-              Select Axe
+              Unlocked Lumberjacks
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {(Object.keys(AXE_DISPLAY_NAMES) as AxeType[]).map((axeType) => (
-                <button
-                  key={axeType}
-                  onClick={() => setSelectedAxe(axeType)}
-                  disabled={!isAxeUnlocked(axeType)}
-                  className={`
-                    relative p-2 border-4 rounded-lg transition-all flex flex-col items-center
-                    ${
-                      selectedAxe === axeType
-                        ? "border-[#a86b2d] bg-[#d4e0a0]"
-                        : isAxeUnlocked(axeType)
-                        ? "border-[#ccc4a1] bg-[#e0e0b2] hover:bg-[#d4e0a0] hover:border-[#a86b2d]"
-                        : "border-[#aaa] bg-[#ddd] opacity-50 cursor-not-allowed"
-                    }
-                  `}
-                >
-                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 mb-1 flex items-center justify-center">
-                    <div
-                      className="w-[32px] h-[32px] transform scale-[2.5] sm:scale-[3.125] translate-x-[-6px] sm:translate-x-[-8px] translate-y-[6px] sm:translate-y-[8px]"
-                      style={{
-                        backgroundImage: `url(/animations/axe/e-tool/${axeType}.png)`,
-                        backgroundPosition: `-32px -64px`,
-                        backgroundSize: `160px 128px`,
-                        imageRendering: "pixelated",
-                      }}
-                    />
-                  </div>
-                  <span className="text-xs sm:text-sm text-[#5a4a1a] font-medium">
-                    {AXE_DISPLAY_NAMES[axeType]}
-                  </span>
-                  {!isAxeUnlocked(axeType) && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-md">
-                      <div className="bg-[#5a4a1a] text-white px-2 py-1 rounded text-xs text-center">
-                        Unlocks at {AXE_UNLOCK_THRESHOLDS[axeType]}
+              {LUMBERJACK_TIERS.map((tier) => {
+                const isUnlocked = unlockedLumberjacks.some(
+                  (lj) => lj.id === tier.id
+                );
+                const lumberjackInstance = unlockedLumberjacks.find(
+                  (lj) => lj.id === tier.id
+                );
+                return (
+                  <div
+                    key={tier.id}
+                    className={`
+                      relative p-2 border-4 rounded-lg flex flex-col items-center
+                      ${
+                        isUnlocked
+                          ? "border-[#a86b2d] bg-[#d4e0a0]"
+                          : "border-[#aaa] bg-[#ddd] opacity-50 cursor-not-allowed"
+                      }
+                    `}
+                  >
+                    {isUnlocked && lumberjackInstance ? (
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 mb-1 flex items-center justify-center">
+                        <LumberjackDisplayCard
+                          character={lumberjackInstance.character}
+                          canvasSize={48}
+                        />
                       </div>
-                    </div>
-                  )}
-                </button>
-              ))}
+                    ) : (
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 mb-1 flex items-center justify-center opacity-50">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                          className="w-10 h-10 text-gray-400"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    <span className="text-xs sm:text-sm text-[#5a4a1a] font-medium text-center">
+                      {tier.displayName}
+                    </span>
+                    {!isUnlocked && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-md">
+                        <div className="bg-[#5a4a1a] text-white px-2 py-1 rounded text-xs text-center">
+                          Unlocks at {tier.unlockThreshold}
+                        </div>
+                      </div>
+                    )}
+                    {isUnlocked && (
+                      <span className="text-xs text-[#5a4a1a] opacity-80 mt-1">
+                        {`${(60000 / tier.clickIntervalMs).toFixed(1)}/min`}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -397,7 +621,6 @@ export default function MiningGame({
                 <MiniMiningInstance
                   id={game.id}
                   character={game.character}
-                  selectedAxe={game.selectedAxe}
                   initialClickCount={game.initialClickCount}
                   uiState={game.uiState}
                   clickTimestamp={game.clickTimestamp}

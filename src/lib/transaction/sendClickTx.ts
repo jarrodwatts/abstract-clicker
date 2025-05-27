@@ -103,8 +103,39 @@ export default async function signClickTx(
 
   console.log(response);
 
-  if (!response.result.transactionHash) {
-    throw new Error("Transaction failed. Session key is likely expired.");
+  if (response.error) {
+    // Handle RPC errors
+    console.error("RPC Error:", response.error);
+    // Specific handling for "known transaction"
+    if (
+      response.error.message &&
+      response.error.message.includes("known transaction")
+    ) {
+      // This case might not always be an "error" in the sense that the tx failed,
+      // but rather that it was already processed or is in mempool.
+      // For now, we'll throw a specific error.
+      // The calling code (MiningGame.tsx) might need to handle this differently,
+      // e.g., by not immediately marking the mini-game as "failed"
+      // or by attempting to fetch the transaction receipt if a hash was previously stored.
+      throw new Error(
+        `Known transaction: ${response.error.message} (Code: ${response.error.code})`
+      );
+    }
+    throw new Error(
+      `RPC Error: ${response.error.message} (Code: ${response.error.code})`
+    );
+  }
+
+  if (!response.result || !response.result.transactionHash) {
+    // This case handles scenarios where there's no RPC error, but the result is not as expected
+    // (e.g., result is null or transactionHash is missing)
+    console.error(
+      "Transaction submission succeeded but no transaction hash was returned in the result.",
+      response
+    );
+    throw new Error(
+      "Transaction submission did not return a transaction hash. Session key might be expired or another issue occurred."
+    );
   }
 
   return {

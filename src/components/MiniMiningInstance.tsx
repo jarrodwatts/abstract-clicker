@@ -14,14 +14,14 @@ import {
 import { NatureTileName, renderNatureTile } from "@/utils/natureImages";
 
 // Types for weapon selection (re-defined or imported if shared)
-type AxeType =
-  | "axe"
-  | "axe_wood"
-  | "axe_copper"
-  | "axe_silver"
-  | "axe_gold"
-  | "axe_blue"
-  | "axe_pink";
+// type AxeType =
+//   | "axe"
+//   | "axe_wood"
+//   | "axe_copper"
+//   | "axe_silver"
+//   | "axe_gold"
+//   | "axe_blue"
+//   | "axe_pink";
 
 // Types for leaf particle animation
 // type Leaf = {
@@ -50,7 +50,7 @@ type AxeType =
 interface MiniMiningInstanceProps {
   id: string;
   character: Character;
-  selectedAxe: AxeType;
+  // selectedAxe: AxeType;
   initialClickCount: number;
   instanceCanvasSize?: number;
   uiState: "submitting" | "optimistic" | "confirmed" | "failed";
@@ -64,7 +64,7 @@ interface MiniMiningInstanceProps {
 const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   id,
   character,
-  selectedAxe,
+  // selectedAxe,
   initialClickCount,
   instanceCanvasSize = 64,
   uiState,
@@ -87,10 +87,10 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
       ? "axe"
       : uiState === "failed"
       ? "die"
-      : "idle";
+      : "walk";
 
-  const actualAction = actions[currentActionName] ? currentActionName : "idle";
-  const actionToUse = actions[actualAction] ? actualAction : "idle";
+  const actualAction = actions[currentActionName] ? currentActionName : "walk";
+  const actionToUse = actions[actualAction] ? actualAction : "walk";
 
   const direction = "right";
   const SPRITE_SCALE_FACTOR = 1;
@@ -115,10 +115,12 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   );
 
   const getToolFilePath = useCallback(() => {
-    if (!actions[actionToUse]) return `animations/idle/e-tool/axe.png`;
-    const toolType = actionToUse === "axe" ? selectedAxe : "axe";
+    if (!actions[actionToUse]) return `animations/walk/e-tool/axe.png`;
+    // const toolType = actionToUse === "axe" ? selectedAxe : "axe";
+    // Always use the default axe visual, as axe selection is no longer a mechanic
+    const toolType = "axe";
     return `animations/${actions[actionToUse].path}/e-tool/${toolType}.png`;
-  }, [actionToUse, selectedAxe]);
+  }, [actionToUse]);
 
   const { layerImages, toolImage, isLoading } = useCharacterImages(
     character,
@@ -130,7 +132,7 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   const isAnimatingForHook =
     uiState === "submitting" || uiState === "optimistic";
 
-  const { animationFrameRef, animationSpeed } = useFrameAnimation(
+  const { currentFrame, animationSpeed } = useFrameAnimation(
     actionToUse,
     isAnimatingForHook,
     isLoading,
@@ -190,8 +192,6 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
       }
       lastTimestamp = timestamp;
 
-      const currentFrame = animationFrameRef.current;
-
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (uiState === "submitting" || uiState === "optimistic") {
@@ -215,10 +215,10 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
       // Draw Character (if applicable)
       if (
         shouldLoop || // Actively animating (axe, pickaxe, die)
-        (uiState === "confirmed" && actionToUse === "idle") || // Static idle for confirmed
-        (uiState === "failed" && actionToUse === "idle") || // Static idle for failed (if not dying)
-        (uiState === "submitting" && actionToUse === "idle") || // Static idle for submitting (if not axing)
-        (uiState === "optimistic" && actionToUse === "idle") // Static idle for optimistic (e.g. layers loading, not pickaxing)
+        (uiState === "confirmed" && actionToUse === "walk") || // Static walk for confirmed
+        (uiState === "failed" && actionToUse === "walk") || // Static walk for failed (if not dying)
+        (uiState === "submitting" && actionToUse === "walk") || // Static walk for submitting (if not axing)
+        (uiState === "optimistic" && actionToUse === "walk") // Static walk for optimistic (e.g. layers loading, not pickaxing)
       ) {
         drawCharacterLayers(
           ctx,
@@ -285,7 +285,7 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
     characterY,
     treeX,
     treeY,
-    animationFrameRef,
+    currentFrame,
     animationSpeed,
     TREE_DRAW_SIZE,
     CHARACTER_DRAW_SIZE,

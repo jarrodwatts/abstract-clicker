@@ -74,7 +74,7 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
     getToolFilePath
   );
 
-  const animationFrame = useFrameAnimation(
+  const { currentFrame, animationSpeed } = useFrameAnimation(
     action,
     isAnimating,
     isLoading,
@@ -89,12 +89,15 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Clear the canvas before drawing the new frame
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     drawCharacterLayers(
       ctx,
       canvas,
       layerImages,
       character,
-      animationFrame,
+      currentFrame,
       action,
       direction,
       drawWidth,
@@ -104,7 +107,7 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
   }, [
     layerImages,
     toolImage,
-    animationFrame,
+    currentFrame,
     character,
     action,
     direction,

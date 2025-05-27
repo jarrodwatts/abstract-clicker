@@ -23,7 +23,8 @@ export function useFrameAnimation(
   isLoading: boolean,
   clickCount: number = 0
 ) {
-  const animationFrameRef = useRef(0);
+  const animationFrameRef = useRef(0); // Internal logic for current frame index
+  const [currentFrame, setCurrentFrame] = useState(0); // Stateful frame for rendering
   const [animationSpeed, setAnimationSpeed] = useState(BASE_ANIMATION_SPEED_MS);
   const clickTimestamps = useRef<number[]>([]);
   const prevClickCount = useRef(clickCount);
@@ -76,24 +77,30 @@ export function useFrameAnimation(
 
   // Animation loop effect
   useEffect(() => {
-    if (isLoading || !isAnimating) return;
+    if (isLoading || !isAnimating) {
+      // Ensure frame resets for rendering when animation stops or is loading
+      if (animationFrameRef.current !== 0) animationFrameRef.current = 0;
+      if (currentFrame !== 0) setCurrentFrame(0);
+      return;
+    }
 
     const interval = setInterval(() => {
-      animationFrameRef.current =
+      const nextFrame =
         animationFrameRef.current >= actions[action].animationFrameLength - 1
           ? 0
           : animationFrameRef.current + 1;
+      animationFrameRef.current = nextFrame;
+      setCurrentFrame(nextFrame); // Update stateful frame to trigger re-render
     }, animationSpeed);
 
     return () => clearInterval(interval);
-  }, [action, isLoading, isAnimating, animationSpeed]);
+  }, [action, isLoading, isAnimating, animationSpeed, currentFrame]); // Added currentFrame to ensure reset logic is covered if it was changed externally somehow, though primarily driven by internal state
 
-  // Reset animation frame when not animating
+  // Reset animation frame state when not animating or when action changes
   useEffect(() => {
-    if (!isAnimating) {
-      animationFrameRef.current = 0;
-    }
-  }, [isAnimating]);
+    animationFrameRef.current = 0;
+    setCurrentFrame(0);
+  }, [isAnimating, action]); // Reset on action change too
 
   // Clean up timer on unmount
   useEffect(() => {
@@ -104,5 +111,5 @@ export function useFrameAnimation(
     };
   }, []);
 
-  return { animationFrameRef, animationSpeed };
+  return { currentFrame, animationSpeed }; // Return stateful frame and speed
 }
