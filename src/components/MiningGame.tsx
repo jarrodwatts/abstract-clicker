@@ -111,7 +111,7 @@ export default function MiningGame({
     incrementClickCount,
   } = useUserClicks();
 
-  const [character, setCharacter] = useState(
+  const [character] = useState(
     () => initialCharacter || generateRandomCharacter()
   );
   const [localClickCount, setLocalClickCount] = useState(0);
@@ -198,6 +198,99 @@ export default function MiningGame({
 
   const gasEstimateQuery = useClickGasEstimate();
   const nonceQuery = useTransactionNonce();
+
+  const submitOptimisticTransaction = useCallback(
+    async (gameId: string, clickerCharacter: Character, nonceForTx: number) => {
+      if (
+        !address ||
+        !sessionData?.privateKey ||
+        !gasEstimateQuery.data ||
+        nonceForTx === undefined
+      ) {
+        console.error("Transaction pre-requisites not met", {
+          address,
+          hasSessionPrivateKey: !!sessionData?.privateKey,
+          hasGasEstimate: !!gasEstimateQuery.data,
+          nonceForTx,
+        });
+        setActiveMiniGames((prev) =>
+          prev.map((g) =>
+            g.id === gameId
+              ? {
+                  ...g,
+                  uiState: "failed",
+                  finalizedTimestamp: Date.now(),
+                  isVisuallyRemoving: false,
+                }
+              : g
+          )
+        );
+        // Start fade-out process for failed submission
+        const FADE_START_DELAY = 1500;
+        const FADE_DURATION = 500;
+        setTimeout(() => {
+          setActiveMiniGames((prev) =>
+            prev.map((g) =>
+              g.id === gameId ? { ...g, isVisuallyRemoving: true } : g
+            )
+          );
+        }, FADE_START_DELAY);
+        setTimeout(() => {
+          setActiveMiniGames((prev) => prev.filter((g) => g.id !== gameId));
+        }, FADE_START_DELAY + FADE_DURATION);
+        return;
+      }
+      const signer = privateKeyToAccount(sessionData.privateKey);
+      try {
+        const { txHash } = await signClickTx(
+          address,
+          signer,
+          sessionData.session,
+          nonceForTx
+        );
+        setActiveMiniGames((prevGames) =>
+          prevGames.map((game) =>
+            game.id === gameId
+              ? {
+                  ...game,
+                  txHash: txHash,
+                  uiState: "optimistic",
+                  optimisticConfirmTimestamp: Date.now(),
+                }
+              : game
+          )
+        );
+      } catch (error) {
+        console.error("Error submitting transaction:", error);
+        setActiveMiniGames((prev) =>
+          prev.map((g) =>
+            g.id === gameId
+              ? {
+                  ...g,
+                  uiState: "failed",
+                  finalizedTimestamp: Date.now(),
+                  isVisuallyRemoving: false,
+                }
+              : g
+          )
+        );
+        // Start fade-out process for failed submission
+        const FADE_START_DELAY = 1500;
+        const FADE_DURATION = 500;
+        setTimeout(() => {
+          setActiveMiniGames((prev) =>
+            prev.map((g) =>
+              g.id === gameId ? { ...g, isVisuallyRemoving: true } : g
+            )
+          );
+        }, FADE_START_DELAY);
+        setTimeout(() => {
+          setActiveMiniGames((prev) => prev.filter((g) => g.id !== gameId));
+        }, FADE_START_DELAY + FADE_DURATION);
+      }
+    },
+    [address, sessionData, gasEstimateQuery.data, setActiveMiniGames]
+  );
 
   const performAutoClick = useCallback(
     async (lumberjackId: string) => {
@@ -376,100 +469,6 @@ export default function MiningGame({
       );
     }, 1000); // Animation duration in ms
   };
-
-  async function submitOptimisticTransaction(
-    gameId: string,
-    clickerCharacter: Character,
-    nonceForTx: number
-  ) {
-    if (
-      !address ||
-      !sessionData?.privateKey ||
-      !gasEstimateQuery.data ||
-      nonceForTx === undefined
-    ) {
-      console.error("Transaction pre-requisites not met", {
-        address,
-        hasSessionPrivateKey: !!sessionData?.privateKey,
-        hasGasEstimate: !!gasEstimateQuery.data,
-        nonceForTx,
-      });
-      setActiveMiniGames((prev) =>
-        prev.map((g) =>
-          g.id === gameId
-            ? {
-                ...g,
-                uiState: "failed",
-                finalizedTimestamp: Date.now(),
-                isVisuallyRemoving: false,
-              }
-            : g
-        )
-      );
-      // Start fade-out process for failed submission
-      const FADE_START_DELAY = 1500;
-      const FADE_DURATION = 500;
-      setTimeout(() => {
-        setActiveMiniGames((prev) =>
-          prev.map((g) =>
-            g.id === gameId ? { ...g, isVisuallyRemoving: true } : g
-          )
-        );
-      }, FADE_START_DELAY);
-      setTimeout(() => {
-        setActiveMiniGames((prev) => prev.filter((g) => g.id !== gameId));
-      }, FADE_START_DELAY + FADE_DURATION);
-      return;
-    }
-    const signer = privateKeyToAccount(sessionData.privateKey);
-    try {
-      const { txHash } = await signClickTx(
-        address,
-        signer,
-        sessionData.session,
-        nonceForTx
-      );
-      setActiveMiniGames((prevGames) =>
-        prevGames.map((game) =>
-          game.id === gameId
-            ? {
-                ...game,
-                txHash: txHash,
-                uiState: "optimistic",
-                optimisticConfirmTimestamp: Date.now(),
-              }
-            : game
-        )
-      );
-    } catch (error) {
-      console.error("Error submitting transaction:", error);
-      setActiveMiniGames((prev) =>
-        prev.map((g) =>
-          g.id === gameId
-            ? {
-                ...g,
-                uiState: "failed",
-                finalizedTimestamp: Date.now(),
-                isVisuallyRemoving: false,
-              }
-            : g
-        )
-      );
-      // Start fade-out process for failed submission
-      const FADE_START_DELAY = 1500;
-      const FADE_DURATION = 500;
-      setTimeout(() => {
-        setActiveMiniGames((prev) =>
-          prev.map((g) =>
-            g.id === gameId ? { ...g, isVisuallyRemoving: true } : g
-          )
-        );
-      }, FADE_START_DELAY);
-      setTimeout(() => {
-        setActiveMiniGames((prev) => prev.filter((g) => g.id !== gameId));
-      }, FADE_START_DELAY + FADE_DURATION);
-    }
-  }
 
   return (
     <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4 md:pt-8 z-10">
@@ -666,7 +665,6 @@ export default function MiningGame({
                 }`}
               >
                 <MiniMiningInstance
-                  id={game.id}
                   character={game.character}
                   initialClickCount={game.initialClickCount}
                   uiState={game.uiState}
@@ -811,9 +809,10 @@ export default function MiningGame({
             zIndex: 9999, // Ensure emojis are on top
             fontSize: "24px", // Size of the emoji
             // CSS variables for dynamic animation properties
-            ["--offsetX" as any]: `${emoji.randomOffsetX}px`,
-            ["--offsetY" as any]: `${emoji.randomOffsetY}px`,
-            ["--rotation" as any]: `${emoji.randomRotation}deg`,
+            // @ts-expect-error YOLO
+            ["--offsetX"]: `${emoji.randomOffsetX}px`,
+            ["--offsetY"]: `${emoji.randomOffsetY}px`,
+            ["--rotation"]: `${emoji.randomRotation}deg`,
           }}
         >
           🪵

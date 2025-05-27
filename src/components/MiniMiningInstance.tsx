@@ -4,14 +4,10 @@ import React, { useEffect, useRef, useState, useCallback } from "react";
 import actions from "@/const/actions";
 import characterProperties from "@/const/characterProperties";
 import Character from "@/types/Character";
-import directions from "@/types/Direction";
 import { useCharacterImages } from "@/hooks/useCharacterImages";
 import { useFrameAnimation } from "@/hooks/useFrameAnimation";
-import {
-  drawCharacterLayers,
-  CANVAS_SIZE as ORIGINAL_CANVAS_SIZE,
-} from "@/utils/canvasUtils";
-import { NatureTileName, renderNatureTile } from "@/utils/natureImages";
+import { drawCharacterLayers } from "@/utils/canvasUtils";
+import { renderNatureTile } from "@/utils/natureImages";
 
 // Types for weapon selection (re-defined or imported if shared)
 // type AxeType =
@@ -48,7 +44,6 @@ import { NatureTileName, renderNatureTile } from "@/utils/natureImages";
 // ];
 
 interface MiniMiningInstanceProps {
-  id: string;
   character: Character;
   // selectedAxe: AxeType;
   initialClickCount: number;
@@ -62,7 +57,6 @@ interface MiniMiningInstanceProps {
 }
 
 const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
-  id,
   character,
   // selectedAxe,
   initialClickCount,

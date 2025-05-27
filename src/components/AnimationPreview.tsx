@@ -74,7 +74,7 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
     getToolFilePath
   );
 
-  const { currentFrame, animationSpeed } = useFrameAnimation(
+  const { currentFrame } = useFrameAnimation(
     action,
     isAnimating,
     isLoading,

@@ -14,12 +14,11 @@ const TransactionMonitor: React.FC<TransactionMonitorProps> = ({
   onCompletion,
   chainId,
 }) => {
-  const { data, isLoading, isSuccess, isError, error } =
-    useWaitForTransactionReceipt({
-      hash: txHash,
-      chainId: chainId,
-      pollingInterval: 500,
-    });
+  const { data, isSuccess, isError, error } = useWaitForTransactionReceipt({
+    hash: txHash,
+    chainId: chainId,
+    pollingInterval: 500,
+  });
 
   useEffect(() => {
     if (isSuccess) {
