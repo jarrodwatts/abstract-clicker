@@ -24,7 +24,7 @@ export const DEFAULT_CALL_POLICIES = [
 ];
 
 export const SESSION_KEY_CONFIG: Omit<SessionConfig, "signer"> = {
-  expiresAt: BigInt(Math.floor(Date.now() / 1000) + 60 * 60 * 24),
+  expiresAt: BigInt(Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30), // 30 days from now
   feeLimit: {
     limitType: LimitType.Lifetime,
     limit: parseEther("1"),

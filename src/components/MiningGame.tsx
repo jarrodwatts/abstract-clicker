@@ -368,7 +368,7 @@ export default function MiningGame({
   };
 
   return (
-    <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4">
+    <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4 mt-12 z-10">
       {/* Game area (left + right columns) */}
       <div className="flex flex-col md:flex-row w-full gap-y-4 md:gap-y-0 md:gap-x-16 items-start">
         {/* Right column: main game area (order-1 on mobile) */}
