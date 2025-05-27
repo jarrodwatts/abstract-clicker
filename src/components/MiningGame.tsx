@@ -508,7 +508,7 @@ export default function MiningGame({
             </Pointer>
             <div
               id="mini-game-spawn-area"
-              onClick={handleGameAreaClick}
+              onPointerDown={handleGameAreaClick}
               className={`${styles.gameFrame} relative w-full h-50 md:h-70 flex items-center justify-center cursor-pointer bg-green-100 hover:bg-green-200 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-lg active:scale-95 overflow-hidden`}
             >
               <Ripple />
