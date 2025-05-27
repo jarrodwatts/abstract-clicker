@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Press_Start_2P } from "next/font/google";
 import AbstractWalletWrapper from "@/components/AbstractWalletProvider";
 import BackgroundMusic from "@/components/BackgroundMusic";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const pressStart2P = Press_Start_2P({
+  variable: "--font-press-start-2p",
+  weight: "400",
   subsets: ["latin"],
 });
 
@@ -27,9 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${pressStart2P.variable} antialiased`}>
         <BackgroundMusic />
         <AbstractWalletWrapper>{children}</AbstractWalletWrapper>
       </body>

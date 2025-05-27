@@ -52,26 +52,24 @@ export default function LoginFlow() {
       className="w-full max-w-md mx-auto p-6 space-y-6 text-center flex flex-col items-center"
       style={{ minHeight: "350px" }}
     >
-      <div className="mb-2">
-        <h2
-          className={`font-semibold text-[#5a4a1a] ${
-            !address ? "text-2xl" : "text-xl"
-          }`}
-        >
-          {!address
-            ? "Axestract"
-            : isSessionLoading
-            ? "Checking session status..."
-            : isCreatingSession || hasInitiatedSessionCreation
-            ? "Creating session..."
-            : "Create Session"}
-        </h2>
-        {!address && (
-          <p className="text-[#5a4a1a] mt-2 opacity-80 whitespace-nowrap overflow-hidden text-ellipsis font-semibold">
-            A demo game showcasing Abstract&rsquo;s new realtime endpoint.
-          </p>
-        )}
-      </div>
+      <h1
+        className={`font-semibold text-[#5a4a1a] ${
+          !address ? "text-2xl" : "text-xl"
+        }`}
+      >
+        {!address
+          ? "Axestract"
+          : isSessionLoading
+          ? "Checking session status..."
+          : isCreatingSession || hasInitiatedSessionCreation
+          ? "Creating session..."
+          : "Create Session"}
+      </h1>
+      {!address && (
+        <p className="text-[#5a4a1a] mt-2 opacity-80 w-full overflow-hidden text-ellipsis font-semibold">
+          A demo game showcasing Abstract&rsquo;s new realtime endpoint.
+        </p>
+      )}
 
       <div
         className="flex justify-center"

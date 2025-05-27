@@ -101,6 +101,12 @@ export default async function signClickTx(
   const endTime = performance.now();
   console.log(`⏱️: ${(endTime - startTime).toFixed(2)}ms`);
 
+  console.log(response);
+
+  if (!response.result.transactionHash) {
+    throw new Error("Transaction failed. Session key is likely expired.");
+  }
+
   return {
     txHash: response.result.transactionHash,
     timeTaken: endTime - startTime,
