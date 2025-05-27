@@ -474,18 +474,18 @@ export default function MiningGame({
   return (
     <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4 md:pt-8 z-10">
       {/* Item 1: Dopamine Click Counter */}
-      <div className="w-full mb-14 text-center animate-subtle-grow-shrink">
+      <div className="w-full mb-8 md:mb-14 text-center animate-subtle-grow-shrink">
         <span className="text-xl font-semibold text-[#5a4a1a] mb-2 block">
           Total Clicks
         </span>
         {isClicksLoading ? (
-          <span className="text-7xl font-bold text-[#5a4a1a] opacity-80">
+          <span className="text-5xl md:text-7xl font-bold text-[#5a4a1a] opacity-80 inline-block">
             Loading...
           </span>
         ) : (
           <NumberTicker
             value={clickCount || 0}
-            className={`mt-2 text-7xl font-bold text-[#5a4a1a] transition-transform duration-300 ease-out ${
+            className={`mt-2 text-5xl md:text-7xl font-bold text-[#5a4a1a] transition-transform duration-300 ease-out inline-block ${
               pulseClickCount ? "scale-125" : "scale-100"
             }`}
           />
@@ -510,10 +510,10 @@ export default function MiningGame({
             <div
               id="mini-game-spawn-area"
               onClick={handleGameAreaClick}
-              className={`${styles.gameFrame} relative w-full h-50 md:h-70 flex items-center justify-center cursor-none hover:cursor-none bg-green-100 hover:bg-green-200 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-lg active:scale-95 overflow-hidden`}
+              className={`${styles.gameFrame} relative w-full h-50 md:h-70 flex items-center justify-center cursor-pointer bg-green-100 hover:bg-green-200 transition-all duration-200 ease-in-out hover:scale-105 hover:shadow-lg active:scale-95 overflow-hidden`}
             >
               <Ripple />
-              <span className="text-2xl font-bold text-green-700 select-none z-10">
+              <span className="text-2xl font-bold text-green-700 select-none z-10 text-center">
                 CLICK TO CHOP!
               </span>
             </div>
@@ -533,7 +533,7 @@ export default function MiningGame({
               }}
             />
             <div className="flex flex-col flex-1 min-w-0 justify-center">
-              <span className="font-bold text-[#5a4a1a] text-md leading-none mb-1">
+              <span className="font-bold text-[#5a4a1a] text-sm sm:text-md leading-none mb-1">
                 Your Wallet
               </span>
               <span className="flex items-center gap-1.5">
@@ -542,7 +542,7 @@ export default function MiningGame({
                     href={`${chain.blockExplorers?.default.url}/address/${address}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center text-[#5a4a1a] opacity-85 underline transition-opacity duration-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-[220px] hover:opacity-100"
+                    className="inline-flex items-center text-[#5a4a1a] opacity-85 underline transition-opacity duration-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] sm:max-w-[180px] md:max-w-[220px] hover:opacity-100 text-xs sm:text-sm"
                     title="View on abscan.org"
                   >
                     {`${address.slice(0, 6)}...${address.slice(-4)}`}
