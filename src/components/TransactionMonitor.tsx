@@ -5,7 +5,7 @@ import { useWaitForTransactionReceipt } from "wagmi";
 
 interface TransactionMonitorProps {
   txHash: `0x${string}`;
-  onCompletion: () => void;
+  onCompletion: (success: boolean) => void;
   chainId?: number; // Optional: if your hook needs a specific chainId not derived from context
 }
 
@@ -24,10 +24,10 @@ const TransactionMonitor: React.FC<TransactionMonitorProps> = ({
   useEffect(() => {
     if (isSuccess) {
       console.log("Transaction successful:", txHash, data);
-      onCompletion();
+      onCompletion(true);
     } else if (isError) {
       console.error("Transaction failed:", txHash, error);
-      onCompletion(); // Call onCompletion even on error to remove the instance
+      onCompletion(false); // Call onCompletion even on error to remove the instance, pass false for success
     }
   }, [isSuccess, isError, onCompletion, txHash, data, error]);
 

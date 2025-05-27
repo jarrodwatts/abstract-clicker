@@ -24,36 +24,41 @@ type AxeType =
   | "axe_pink";
 
 // Types for leaf particle animation
-type Leaf = {
-  id: string;
-  x: number;
-  y: number;
-  rotation: number;
-  scale: number;
-  velocityX: number;
-  velocityY: number;
-  angularVelocity: number;
-  type: string;
-  opacity: number;
-  gravity: number;
-};
+// type Leaf = {
+//   id: string;
+//   x: number;
+//   y: number;
+//   rotation: number;
+//   scale: number;
+//   velocityX: number;
+//   velocityY: number;
+//   angularVelocity: number;
+//   type: string;
+//   opacity: number;
+//   gravity: number;
+// };
 
 // Available leaf types for animation
-const LEAF_TYPES = [
-  "Apple Tree Leaf",
-  "Orange Tree Leaf",
-  "Birch Tree Leaf",
-  "Pine Tree Leaf",
-  "Pear Tree Leaf",
-];
+// const LEAF_TYPES = [
+//   "Apple Tree Leaf",
+//   "Orange Tree Leaf",
+//   "Birch Tree Leaf",
+//   "Pine Tree Leaf",
+//   "Pear Tree Leaf",
+// ];
 
 interface MiniMiningInstanceProps {
   id: string;
   character: Character;
   selectedAxe: AxeType;
-  initialClickCount: number; // To pass to useFrameAnimation
-  onComplete: (id: string) => void;
-  instanceCanvasSize?: number; // e.g. 64
+  initialClickCount: number;
+  instanceCanvasSize?: number;
+  uiState: "submitting" | "optimistic" | "confirmed" | "failed";
+  clickTimestamp: number;
+  optimisticConfirmTimestamp?: number;
+  finalizedTimestamp?: number;
+  blockExplorerBaseUrl?: string;
+  txHash?: `0x${string}`;
 }
 
 const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
@@ -61,149 +66,234 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   character,
   selectedAxe,
   initialClickCount,
-  onComplete,
   instanceCanvasSize = 64,
+  uiState,
+  clickTimestamp,
+  optimisticConfirmTimestamp,
+  finalizedTimestamp,
+  blockExplorerBaseUrl,
+  txHash,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [leaves, setLeaves] = useState<Leaf[]>([]);
-  const animationFrameIdRef = useRef<number | null>(null); // For leaf animation
+  // const [leaves, setLeaves] = useState<Leaf[]>([]);
+  const animationLoopIdRef = useRef<number | null>(null);
   const [treeScale, setTreeScale] = useState(1);
   const treeAnimationRef = useRef<number | null>(null);
 
-  const action = "axe"; // Fixed for this component
-  const direction = "right"; // Default direction
-  const SPRITE_SCALE_FACTOR = 1; // Draw sprites at 1x
+  const currentActionName =
+    uiState === "submitting"
+      ? "axe"
+      : uiState === "optimistic"
+      ? "axe"
+      : uiState === "failed"
+      ? "die"
+      : "idle";
+
+  const actualAction = actions[currentActionName] ? currentActionName : "idle";
+  const actionToUse = actions[actualAction] ? actualAction : "idle";
+
+  const direction = "right";
+  const SPRITE_SCALE_FACTOR = 1;
   const CHARACTER_DRAW_SIZE = 32 * SPRITE_SCALE_FACTOR;
   const TREE_DRAW_SIZE = 32 * SPRITE_SCALE_FACTOR;
-
-  // Position character and tree within the small canvas
-  // Character bottom-left of its 32x32 space, tree bottom-right of its 32x32 space
   const characterX = 0;
-  const characterY = instanceCanvasSize - CHARACTER_DRAW_SIZE;
+  const characterY = (instanceCanvasSize - CHARACTER_DRAW_SIZE) / 2;
   const treeX = instanceCanvasSize - TREE_DRAW_SIZE - 8;
-  const treeY = instanceCanvasSize - TREE_DRAW_SIZE;
+  const treeY = (instanceCanvasSize - TREE_DRAW_SIZE) / 2;
 
-  // Get file path for each character layer based on action
   const getFilePathForLayer = useCallback(
     (layer: keyof typeof characterProperties) => {
-      if (!character[layer]) return "";
-      const filePath = `animations/${actions[action].path}/${characterProperties[layer].path}/`;
+      if (!character[layer] || !actions[actionToUse]) return "";
+      const filePath = `animations/${actions[actionToUse].path}/${characterProperties[layer].path}/`;
       const file =
         characterProperties[layer].files[character[layer]?.type as number];
       const fileWithoutType = file.split(".")[0];
-      const fileWithAction = `${fileWithoutType}_${action}`;
+      const fileWithAction = `${fileWithoutType}_${actionToUse}`;
       return `${filePath}${fileWithAction}.${file.split(".")[1]}`;
     },
-    [action, character]
+    [actionToUse, character]
   );
 
-  // Get special file path for the axe/tool
   const getToolFilePath = useCallback(() => {
-    return `animations/${actions[action].path}/e-tool/${selectedAxe}.png`;
-  }, [action, selectedAxe]);
+    if (!actions[actionToUse]) return `animations/idle/e-tool/axe.png`;
+    const toolType = actionToUse === "axe" ? selectedAxe : "axe";
+    return `animations/${actions[actionToUse].path}/e-tool/${toolType}.png`;
+  }, [actionToUse, selectedAxe]);
 
   const { layerImages, toolImage, isLoading } = useCharacterImages(
     character,
-    action,
+    actionToUse,
     getFilePathForLayer,
     getToolFilePath
   );
 
-  // Frame animation for the character
-  const animationFrame = useFrameAnimation(
-    action,
-    true, // isAnimating is always true for the lifetime of this instance
+  const isAnimatingForHook =
+    uiState === "submitting" || uiState === "optimistic";
+
+  const { animationFrameRef, animationSpeed } = useFrameAnimation(
+    actionToUse,
+    isAnimatingForHook,
     isLoading,
-    initialClickCount // Use the click count at the moment of creation
+    initialClickCount
   );
 
-  // Create leaf burst on mount
   useEffect(() => {
-    createLeafBurst();
-    // Trigger tree animation
-    animateTree();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (uiState === "submitting" || uiState === "optimistic") {
+      // createLeafBurst();
+      animateTree();
+    }
+  }, [uiState]);
 
-  // Main drawing effect for character, tree, and leaves
   useEffect(() => {
-    if (!canvasRef.current || isLoading) return;
+    if (isLoading || !canvasRef.current) {
+      if (animationLoopIdRef.current) {
+        cancelAnimationFrame(animationLoopIdRef.current);
+        animationLoopIdRef.current = null;
+      }
+      return;
+    }
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let lastTimestamp = 0;
+    const targetInterval = animationSpeed;
 
-    // Draw the tree (scaled)
-    ctx.save();
-    const treeCenterX = treeX + TREE_DRAW_SIZE / 2;
-    const treeCenterY = treeY + TREE_DRAW_SIZE / 2;
-    ctx.translate(treeCenterX, treeCenterY);
-    ctx.scale(treeScale, treeScale);
-    ctx.translate(-treeCenterX, -treeCenterY);
-    renderNatureTile(
-      ctx,
-      "Apple Tree",
-      treeX,
-      treeY,
-      TREE_DRAW_SIZE,
-      TREE_DRAW_SIZE
-    );
-    ctx.restore();
+    const gameLoop = (timestamp: number) => {
+      // Determine if we should be in an active animation loop
+      const shouldLoop =
+        (uiState === "submitting" && actionToUse === "axe") || // Axe animation
+        (uiState === "optimistic" && actionToUse === "axe") || // Axe animation (changed from pickaxe)
+        (uiState === "failed" && actionToUse === "die"); // Die animation
 
-    // Draw character
-    // Scaling within drawCharacterLayers is based on ORIGINAL_CANVAS_SIZE, so we draw to a conceptual 32x32 area.
-    // The drawCharacterLayers function handles internal scaling if its canvas argument (first one) has different size than ORIGINAL_CANVAS_SIZE.
-    // For 1x rendering of a 32px sprite, we'd ideally pass a 32x32 canvas to it.
-    // Here, we draw directly to our instance canvas, but specify drawWidth/Height for the character.
-    // We want to draw the character in a 32x32 pixel area.
-    drawCharacterLayers(
-      ctx,
-      canvas, // This canvas is instanceCanvasSize (e.g. 64x64)
-      layerImages,
-      character,
-      animationFrame,
-      action,
-      direction,
-      CHARACTER_DRAW_SIZE, // draw character at 32px width
-      CHARACTER_DRAW_SIZE, // draw character at 32px height
-      toolImage,
-      characterX, // destinationX
-      characterY // destinationY
-      // SPRITE_SCALE_FACTOR is not a direct param; handled by CHARACTER_DRAW_SIZE
-    );
+      if (
+        !shouldLoop &&
+        uiState !== "confirmed" &&
+        uiState !== "failed" &&
+        uiState !== "submitting"
+      ) {
+        // If not looping and not in a state that requires a final static draw (confirmed, failed, submitting),
+        // then clear and stop.
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (animationLoopIdRef.current) {
+          cancelAnimationFrame(animationLoopIdRef.current);
+          animationLoopIdRef.current = null;
+        }
+        return;
+      }
 
-    // Draw leaves
-    for (const leaf of leaves) {
-      ctx.save();
-      ctx.translate(leaf.x, leaf.y);
-      ctx.rotate(leaf.rotation);
-      ctx.scale(leaf.scale, leaf.scale);
-      ctx.globalAlpha = leaf.opacity;
-      renderNatureTile(ctx, leaf.type as NatureTileName, -8, -8, 16, 16); // Smaller leaves
-      ctx.restore();
+      // Frame skipping logic (throttling)
+      if (shouldLoop && timestamp - lastTimestamp < targetInterval) {
+        animationLoopIdRef.current = requestAnimationFrame(gameLoop);
+        return; // Skip frame if not enough time has passed for active animations
+      }
+      lastTimestamp = timestamp;
+
+      const currentFrame = animationFrameRef.current;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (uiState === "submitting" || uiState === "optimistic") {
+        ctx.save();
+        const treeCenterX = treeX + TREE_DRAW_SIZE / 2;
+        const treeCenterY = treeY + TREE_DRAW_SIZE / 2;
+        ctx.translate(treeCenterX, treeCenterY);
+        ctx.scale(treeScale, treeScale);
+        ctx.translate(-treeCenterX, -treeCenterY);
+        renderNatureTile(
+          ctx,
+          "Apple Tree",
+          treeX,
+          treeY,
+          TREE_DRAW_SIZE,
+          TREE_DRAW_SIZE
+        );
+        ctx.restore();
+      }
+
+      // Draw Character (if applicable)
+      if (
+        shouldLoop || // Actively animating (axe, pickaxe, die)
+        (uiState === "confirmed" && actionToUse === "idle") || // Static idle for confirmed
+        (uiState === "failed" && actionToUse === "idle") || // Static idle for failed (if not dying)
+        (uiState === "submitting" && actionToUse === "idle") || // Static idle for submitting (if not axing)
+        (uiState === "optimistic" && actionToUse === "idle") // Static idle for optimistic (e.g. layers loading, not pickaxing)
+      ) {
+        drawCharacterLayers(
+          ctx,
+          canvas,
+          layerImages,
+          character,
+          currentFrame,
+          actionToUse,
+          direction,
+          CHARACTER_DRAW_SIZE,
+          CHARACTER_DRAW_SIZE,
+          toolImage,
+          characterX,
+          characterY
+        );
+      }
+
+      // Overlays for final states or submitting message
+      if (uiState === "failed" && actionToUse !== "die") {
+        ctx.fillStyle = "rgba(139, 0, 0, 0.8)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "bold 24px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("✖", canvas.width / 2, canvas.height / 2 + 8);
+      }
+
+      // Only continue RAF loop if we are actively animating.
+      // For static states (confirmed, failed (no die), some idle cases), we draw once and stop.
+      if (shouldLoop) {
+        animationLoopIdRef.current = requestAnimationFrame(gameLoop);
+      } else {
+        // Drawn one static frame for confirmed/failed/submitting (if not covered by shouldLoop)
+        // Clear the loop ref
+        if (animationLoopIdRef.current) {
+          cancelAnimationFrame(animationLoopIdRef.current);
+          animationLoopIdRef.current = null;
+        }
+      }
+    };
+
+    if (!isLoading) {
+      animationLoopIdRef.current = requestAnimationFrame(gameLoop);
     }
+
+    return () => {
+      if (animationLoopIdRef.current) {
+        cancelAnimationFrame(animationLoopIdRef.current);
+        animationLoopIdRef.current = null;
+      }
+    };
   }, [
     isLoading,
+    isAnimatingForHook,
+    actionToUse,
     layerImages,
     toolImage,
-    animationFrame,
     character,
-    action,
     direction,
-    leaves,
     treeScale,
-    instanceCanvasSize, // Re-draw if canvas size prop changes (though not expected for an instance)
+    uiState,
+    instanceCanvasSize,
     characterX,
     characterY,
     treeX,
     treeY,
+    animationFrameRef,
+    animationSpeed,
+    TREE_DRAW_SIZE,
+    CHARACTER_DRAW_SIZE,
   ]);
 
-  // Tree animation system (simplified for mini instance)
   const animateTree = () => {
-    const ANIMATION_DURATION = 15; // Shorter for mini
-    const MAX_SCALE = 1.1; // Less pronounced
+    const ANIMATION_DURATION = 15;
+    const MAX_SCALE = 1.1;
     let frame = 0;
     let growing = true;
 
@@ -221,7 +311,7 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
         setTreeScale(1 + (MAX_SCALE - 1) * (1 - progress));
         if (frame >= ANIMATION_DURATION) {
           setTreeScale(1);
-          treeAnimationRef.current = null; // End animation
+          treeAnimationRef.current = null;
           return;
         }
       }
@@ -230,114 +320,105 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
     treeAnimationRef.current = requestAnimationFrame(doAnimate);
   };
 
-  const updateLeafParticles = useCallback(() => {
-    setLeaves((prevLeaves) => {
-      const updatedLeaves = prevLeaves.map((leaf) => ({
-        ...leaf,
-        x: leaf.x + leaf.velocityX,
-        y: leaf.y + leaf.velocityY,
-        rotation: leaf.rotation + leaf.angularVelocity,
-        velocityX: leaf.velocityX * 0.95,
-        velocityY: (leaf.velocityY + leaf.gravity) * 0.95,
-        opacity: leaf.opacity * 0.98, // Fade a bit faster
-      }));
+  let bgColorClass = "bg-transparent";
+  let borderColorClass = "border-transparent";
+  let statusText = "";
 
-      const activeLeaves = updatedLeaves.filter(
-        (leaf) =>
-          leaf.opacity > 0.1 &&
-          leaf.x > -20 &&
-          leaf.x < instanceCanvasSize + 20 &&
-          leaf.y > -20 &&
-          leaf.y < instanceCanvasSize + 20
-      );
+  if (uiState === "submitting") {
+    bgColorClass = "bg-orange-500/20";
+    borderColorClass = "border-orange-500";
+    statusText = "Submitting Transaction...";
+  } else if (uiState === "optimistic") {
+    bgColorClass = "bg-green-500/20";
+    borderColorClass = "border-green-500";
+    statusText = "Optimistically Confirmed.";
+  } else if (uiState === "confirmed") {
+    bgColorClass = "bg-green-600";
+    borderColorClass = "border-green-700";
+    const timeToOptimistic =
+      optimisticConfirmTimestamp && clickTimestamp
+        ? ((optimisticConfirmTimestamp - clickTimestamp) / 1000).toFixed(2)
+        : "N/A";
+    const timeToFinalized =
+      finalizedTimestamp && optimisticConfirmTimestamp
+        ? ((finalizedTimestamp - optimisticConfirmTimestamp) / 1000).toFixed(2)
+        : "N/A";
+    statusText = `⏱️ Opt: ${timeToOptimistic}s, ⏱️ Final: ${timeToFinalized}s`;
+  } else if (uiState === "failed") {
+    bgColorClass = "bg-red-600";
+    borderColorClass = "border-red-700";
+    statusText = "Mining Failed.";
+  }
 
-      if (activeLeaves.length === 0) {
-        if (animationFrameIdRef.current)
-          cancelAnimationFrame(animationFrameIdRef.current);
-        animationFrameIdRef.current = null;
-      }
-      return activeLeaves;
-    });
-    // Continue animation loop if there are still leaves
-    // This check should be inside setLeaves's callback or after it, based on activeLeaves.length
-    // For now, the requestAnimationFrame is outside setLeaves and will run if leaves.length (from previous render) > 0
-    // This needs to be slightly rethought if animationFrameIdRef is nulled out by setLeaves's callback.
-    if (leaves.length > 0) {
-      // Check current leaves length; if it becomes 0 after setLeaves, this might run one extra time
-      animationFrameIdRef.current = requestAnimationFrame(
-        updateLeafParticlesInternalRef.current!
-      );
-    } else {
-      if (animationFrameIdRef.current)
-        cancelAnimationFrame(animationFrameIdRef.current);
-      animationFrameIdRef.current = null;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [instanceCanvasSize]); // Removed leaves from deps to avoid re-creating function every time leaves change
+  const isLinkable =
+    (uiState === "confirmed" || uiState === "failed") &&
+    !!blockExplorerBaseUrl &&
+    !!txHash;
 
-  // Leaf animation system
-  useEffect(() => {
-    // This effect now just manages starting and stopping the loop based on leaves count
-    if (leaves.length > 0 && !animationFrameIdRef.current) {
-      animationFrameIdRef.current = requestAnimationFrame(
-        updateLeafParticlesInternalRef.current!
-      );
-    }
+  const href = isLinkable ? `${blockExplorerBaseUrl}/tx/${txHash}` : undefined;
 
-    return () => {
-      if (animationFrameIdRef.current) {
-        cancelAnimationFrame(animationFrameIdRef.current);
-        animationFrameIdRef.current = null;
-      }
-    };
-  }, [leaves, instanceCanvasSize]); // Rerun if leaves array or canvasSize changes
+  const Tag = isLinkable ? "a" : "div";
 
-  const createLeafBurst = () => {
-    const burstCenterX = treeX + TREE_DRAW_SIZE / 2; // Emit from tree center
-    const burstCenterY = treeY + TREE_DRAW_SIZE / 2;
-    const numLeaves = 3 + Math.floor(Math.random() * 3); // Fewer leaves
-    const newLeaves: Leaf[] = [];
-
-    for (let i = 0; i < numLeaves; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = 2 + Math.random() * 2; // Slower speed for small canvas
-      newLeaves.push({
-        id: `leaf-${Date.now()}-${i}`,
-        x: burstCenterX,
-        y: burstCenterY,
-        rotation: Math.random() * Math.PI * 2,
-        scale: 0.2 + Math.random() * 0.2, // Smaller scale
-        velocityX: Math.cos(angle) * speed,
-        velocityY: Math.sin(angle) * speed,
-        angularVelocity: (Math.random() - 0.5) * 0.1,
-        type: LEAF_TYPES[Math.floor(Math.random() * LEAF_TYPES.length)],
-        opacity: 0.7 + Math.random() * 0.2,
-        gravity: 0.03 + Math.random() * 0.03, // Less gravity
-      });
-    }
-    setLeaves((prevLeaves) => [...prevLeaves, ...newLeaves]);
-    // Ensure animation loop starts if it wasn't running
-    if (!animationFrameIdRef.current && newLeaves.length > 0) {
-      animationFrameIdRef.current = requestAnimationFrame(
-        updateLeafParticlesInternalRef.current!
-      );
-    }
+  const wrapperProps: React.HTMLAttributes<HTMLDivElement> &
+    React.AnchorHTMLAttributes<HTMLAnchorElement> = {
+    className: `w-full p-2 rounded-md border-2 ${bgColorClass} ${borderColorClass} flex items-center gap-3 transition-all duration-300 ${
+      isLinkable ? "hover:opacity-90 cursor-pointer" : ""
+    }`,
   };
 
-  // To ensure the updateLeafParticles used in requestAnimationFrame has the latest state for `leaves`
-  const updateLeafParticlesInternalRef = useRef(updateLeafParticles);
-  useEffect(() => {
-    updateLeafParticlesInternalRef.current = updateLeafParticles;
-  }, [updateLeafParticles]);
+  if (isLinkable && href) {
+    wrapperProps.href = href;
+    wrapperProps.target = "_blank";
+    wrapperProps.rel = "noopener noreferrer";
+    wrapperProps.title = `View Transaction: ${txHash}`;
+  }
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={instanceCanvasSize}
-      height={instanceCanvasSize}
-      className="z-20 border " // Simple border for visibility
-      style={{ imageRendering: "pixelated" }}
-    />
+    <Tag {...wrapperProps}>
+      {uiState === "confirmed" ? (
+        <div
+          style={{ width: instanceCanvasSize, height: instanceCanvasSize }}
+          className="flex items-center justify-center z-10 rounded"
+        >
+          <span className="text-3xl" role="img" aria-label="Confirmed">
+            ✅
+          </span>
+        </div>
+      ) : (
+        <canvas
+          ref={canvasRef}
+          width={instanceCanvasSize}
+          height={instanceCanvasSize}
+          className={`z-10 rounded ${uiState === "failed" ? "opacity-80" : ""}`}
+          style={{ imageRendering: "pixelated" }}
+        />
+      )}
+      <div className="flex-grow text-xs flex flex-col">
+        <p
+          className={`font-semibold ${
+            uiState === "confirmed" || uiState === "failed"
+              ? "text-white"
+              : "text-gray-700 dark:text-gray-300"
+          }`}
+        >
+          {statusText}
+        </p>
+        {isLinkable && txHash && (
+          <p
+            className="text-xs mt-1 truncate max-w-full break-words"
+            style={{
+              color:
+                uiState === "confirmed" || uiState === "failed"
+                  ? "white"
+                  : "inherit",
+              opacity: 0.8,
+            }}
+          >
+            Tx: {`${txHash.slice(0, 6)}...${txHash.slice(-4)}`}
+          </p>
+        )}
+      </div>
+    </Tag>
   );
 };
 

@@ -23,7 +23,7 @@ export function useFrameAnimation(
   isLoading: boolean,
   clickCount: number = 0
 ) {
-  const [animationFrame, setAnimationFrame] = useState(0);
+  const animationFrameRef = useRef(0);
   const [animationSpeed, setAnimationSpeed] = useState(BASE_ANIMATION_SPEED_MS);
   const clickTimestamps = useRef<number[]>([]);
   const prevClickCount = useRef(clickCount);
@@ -79,9 +79,10 @@ export function useFrameAnimation(
     if (isLoading || !isAnimating) return;
 
     const interval = setInterval(() => {
-      setAnimationFrame((current) =>
-        current >= actions[action].animationFrameLength - 1 ? 0 : current + 1
-      );
+      animationFrameRef.current =
+        animationFrameRef.current >= actions[action].animationFrameLength - 1
+          ? 0
+          : animationFrameRef.current + 1;
     }, animationSpeed);
 
     return () => clearInterval(interval);
@@ -90,7 +91,7 @@ export function useFrameAnimation(
   // Reset animation frame when not animating
   useEffect(() => {
     if (!isAnimating) {
-      setAnimationFrame(0);
+      animationFrameRef.current = 0;
     }
   }, [isAnimating]);
 
@@ -103,5 +104,5 @@ export function useFrameAnimation(
     };
   }, []);
 
-  return animationFrame;
+  return { animationFrameRef, animationSpeed };
 }
