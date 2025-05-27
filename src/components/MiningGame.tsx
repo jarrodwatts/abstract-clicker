@@ -58,6 +58,7 @@ interface ActiveMiniGame {
   clickTimestamp: number;
   optimisticConfirmTimestamp?: number;
   finalizedTimestamp?: number;
+  isVisuallyRemoving?: boolean; // For fade-out effect
 }
 
 export default function MiningGame({
@@ -80,6 +81,40 @@ export default function MiningGame({
   const [localClickCount, setLocalClickCount] = useState(0);
   const [activeMiniGames, setActiveMiniGames] = useState<ActiveMiniGame[]>([]);
 
+  const [pulseClickCount, setPulseClickCount] = useState(false);
+
+  // Refs for height synchronization
+  const leftColumnRef = useRef<HTMLDivElement>(null);
+  const rightScrollableContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof clickCount === "number" && clickCount > 0 && !isClicksLoading) {
+      setPulseClickCount(true);
+      const timer = setTimeout(() => setPulseClickCount(false), 300); // Animation duration
+      return () => clearTimeout(timer);
+    }
+  }, [clickCount, isClicksLoading]);
+
+  useEffect(() => {
+    const synchronizeHeights = () => {
+      if (leftColumnRef.current && rightScrollableContentRef.current) {
+        const leftColumnHeight = leftColumnRef.current.offsetHeight;
+        rightScrollableContentRef.current.style.maxHeight = `${leftColumnHeight}px`;
+      }
+    };
+
+    synchronizeHeights(); // Initial sync
+
+    // Optional: Re-sync if activeMiniGames length changes, as this could affect left column height (though less likely with current fixed content)
+    // This might be too frequent if many games are added/removed quickly.
+    // A ResizeObserver on the left column would be more performant for dynamic content changes in left col.
+
+    window.addEventListener("resize", synchronizeHeights);
+    return () => {
+      window.removeEventListener("resize", synchronizeHeights);
+    };
+  }, [activeMiniGames.length]); // Re-run if the number of games changes, or on mount/unmount
+
   const handleGameAreaClick = () => {
     const currentLocalClick = localClickCount + 1;
     setLocalClickCount(currentLocalClick);
@@ -92,6 +127,7 @@ export default function MiningGame({
       initialClickCount: currentLocalClick,
       uiState: "submitting",
       clickTimestamp: Date.now(),
+      isVisuallyRemoving: false,
     };
     setActiveMiniGames((prevGames) => [newMiniGame, ...prevGames]);
     submitOptimisticTransaction(newMiniGameId);
@@ -116,10 +152,28 @@ export default function MiningGame({
       setActiveMiniGames((prev) =>
         prev.map((g) =>
           g.id === gameId
-            ? { ...g, uiState: "failed", finalizedTimestamp: Date.now() }
+            ? {
+                ...g,
+                uiState: "failed",
+                finalizedTimestamp: Date.now(),
+                isVisuallyRemoving: false,
+              }
             : g
         )
       );
+      // Start fade-out process for failed submission
+      const FADE_START_DELAY = 1500;
+      const FADE_DURATION = 500;
+      setTimeout(() => {
+        setActiveMiniGames((prev) =>
+          prev.map((g) =>
+            g.id === gameId ? { ...g, isVisuallyRemoving: true } : g
+          )
+        );
+      }, FADE_START_DELAY);
+      setTimeout(() => {
+        setActiveMiniGames((prev) => prev.filter((g) => g.id !== gameId));
+      }, FADE_START_DELAY + FADE_DURATION);
       return;
     }
     const signer = privateKeyToAccount(sessionData.privateKey);
@@ -147,10 +201,28 @@ export default function MiningGame({
       setActiveMiniGames((prev) =>
         prev.map((g) =>
           g.id === gameId
-            ? { ...g, uiState: "failed", finalizedTimestamp: Date.now() }
+            ? {
+                ...g,
+                uiState: "failed",
+                finalizedTimestamp: Date.now(),
+                isVisuallyRemoving: false,
+              }
             : g
         )
       );
+      // Start fade-out process for failed submission
+      const FADE_START_DELAY = 1500;
+      const FADE_DURATION = 500;
+      setTimeout(() => {
+        setActiveMiniGames((prev) =>
+          prev.map((g) =>
+            g.id === gameId ? { ...g, isVisuallyRemoving: true } : g
+          )
+        );
+      }, FADE_START_DELAY);
+      setTimeout(() => {
+        setActiveMiniGames((prev) => prev.filter((g) => g.id !== gameId));
+      }, FADE_START_DELAY + FADE_DURATION);
     }
   }
 
@@ -161,9 +233,44 @@ export default function MiningGame({
 
   return (
     <div className="flex flex-col items-center w-full max-w-5xl mx-auto p-4 md:pt-8 z-10">
+      {/* Item 1: Dopamine Click Counter */}
+      <div className="w-full mb-14 text-center animate-subtle-grow-shrink">
+        <span className="text-xl font-semibold text-[#5a4a1a] mb-2 block">
+          Total Clicks
+        </span>
+        {isClicksLoading ? (
+          <span className="text-7xl font-bold text-[#5a4a1a] opacity-80">
+            Loading...
+          </span>
+        ) : (
+          <NumberTicker
+            value={clickCount || 0}
+            className={`mt-2 text-7xl font-bold text-[#5a4a1a] transition-transform duration-300 ease-out ${
+              pulseClickCount ? "scale-125" : "scale-100"
+            }`}
+          />
+        )}
+      </div>
+
       <div className="flex flex-col md:flex-row w-full gap-x-8 gap-y-4 items-start">
-        {/* Left Column: Info and Controls */}
-        <div className="flex flex-col gap-4 w-full md:w-1/2 order-2 md:order-1">
+        {/* Left Column: Click Area, Info, and Controls */}
+        <div
+          ref={leftColumnRef}
+          className="flex flex-col gap-6 w-full md:w-1/2 order-1"
+        >
+          {" "}
+          {/* order-1 for mobile and md */}
+          {/* Item 2: Click Area (Moved Here) */}
+          <div
+            id="mini-game-spawn-area"
+            onClick={handleGameAreaClick}
+            className={`${styles.gameFrame} w-full h-50 md:h-70 flex items-center justify-center cursor-pointer bg-green-100 hover:bg-green-200 transition-colors`}
+          >
+            <span className="text-2xl font-bold text-green-700 select-none">
+              CLICK TO MINE!
+            </span>
+          </div>
+          {/* Item 2: Your Wallet Info (Moved Here) */}
           <div
             className={`${styles.gameFrameThin} min-h-[72px] flex flex-row items-center gap-4 w-full`}
           >
@@ -220,86 +327,10 @@ export default function MiningGame({
               </span>
             </div>
           </div>
-          <div
-            className={`${styles.gameFrameThin} min-h-[72px] flex flex-row items-center gap-4 p-5 w-full`}
-          >
-            <svg
-              width="36"
-              height="36"
-              viewBox="0 0 36 36"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="flex-shrink-0"
-            >
-              {/* Trunk */}
-              <rect x="16" y="27" width="4" height="6" rx="1" fill="#a86b2d" />
-              {/* Tree layers */}
-              <polygon
-                points="18,5 8,20 28,20"
-                fill="#bfc98a"
-                stroke="#a86b2d"
-                strokeWidth="2"
-              />
-              <polygon
-                points="18,11 12,22 24,22"
-                fill="#bfc98a"
-                stroke="#a86b2d"
-                strokeWidth="2"
-              />
-              <polygon
-                points="18,17 15,25 21,25"
-                fill="#bfc98a"
-                stroke="#a86b2d"
-                strokeWidth="2"
-              />
-            </svg>
-            <div className="flex flex-col flex-1 min-w-0 justify-center gap-1">
-              <span className="font-bold text-[#5a4a1a] text-md leading-none">
-                You&rsquo;ve Clicked
-              </span>
-              <span className="flex items-end gap-1 text-[#5a4a1a] text-base opacity-85 mt-0.5 min-w-[60px]">
-                {isClicksLoading ? (
-                  "Loading..."
-                ) : (
-                  <>
-                    <NumberTicker
-                      value={clickCount || 0}
-                      className="text-2xl font-bold"
-                    />
-                    <span className="text-xs text-[#5a4a1a] opacity-60 mb-1 leading-none">
-                      times
-                    </span>
-                  </>
-                )}
-              </span>
-            </div>
-          </div>
-          <button
-            onClick={() => setCharacter(generateRandomCharacter())}
-            className="w-full min-h-[48px] flex items-center gap-4 p-3 text-left transition-colors bg-[#bfc98a] border-4 border-[#a86b2d] rounded-[32px] shadow-[12px_16px_32px_0_rgba(80,40,10,0.35)] relative cursor-pointer mt-2 hover:bg-[#d4e0a0] hover:border-[#8b5a2b] hover:shadow-[8px_12px_24px_0_rgba(80,40,10,0.25)]"
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 36 36"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="flex-shrink-0"
-            >
-              <path
-                d="M18 6C11.373 6 6 11.373 6 18C6 24.627 11.373 30 18 30C24.627 30 30 24.627 30 18C30 11.373 24.627 6 18 6ZM18 28C12.477 28 8 23.523 8 18C8 12.477 12.477 8 18 8C23.523 8 28 12.477 28 18C28 23.523 23.523 28 18 28Z"
-                fill="#5a4a1a"
-              />
-              <path
-                d="M18 12C17.448 12 17 12.448 17 13V17H13C12.448 17 12 17.448 12 18C12 18.552 12.448 19 13 19H17V23C17 23.552 17.448 24 18 24C18.552 24 19 23.552 19 23V19H23C23.552 19 24 18.552 24 18C24 17.448 23.552 17 23 17H19V13C19 12.448 18.552 12 18 12Z"
-                fill="#5a4a1a"
-              />
-            </svg>
-            <span className="font-bold text-[#5a4a1a] text-base">
-              Generate New Character
-            </span>
-          </button>
-          <div className="w-full mt-4">
+          {/* Axe Selection (Remains Here) */}
+          <div className="w-full mt-2">
+            {" "}
+            {/* Adjusted margin from mt-4 */}
             <h3 className="font-bold text-[#5a4a1a] text-base mb-2">
               Select Axe
             </h3>
@@ -347,23 +378,22 @@ export default function MiningGame({
           </div>
         </div>
 
-        {/* Right Column: Click Area and Miners */}
-        <div className="flex flex-col gap-6 w-full md:w-1/2 order-1 md:order-2">
-          {/* Click Area */}
+        {/* Right Column: Miners List */}
+        {/* order-2 for mobile and md */}
+        <div className="flex flex-col w-full md:w-1/2 order-2">
+          {/* Item 4: Miners Container taking full available height based on JS */}
           <div
-            id="mini-game-spawn-area"
-            onClick={handleGameAreaClick}
-            className={`${styles.gameFrame} w-full h-50 md:h-70 flex items-center justify-center cursor-pointer bg-green-100 hover:bg-green-200 transition-colors`}
+            ref={rightScrollableContentRef}
+            className="flex-1 w-full flex flex-col gap-2 p-1 rounded-lg min-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-amber-700 scrollbar-track-amber-200/50"
           >
-            <span className="text-2xl font-bold text-green-700 select-none">
-              CLICK TO MINE!
-            </span>
-          </div>
-
-          {/* Miners Container: Adjust max-h for 5 items */}
-          <div className="w-full flex flex-col gap-2 p-1 rounded-lg min-h-[80px] max-h-[368px] overflow-y-scroll scrollbar-thin scrollbar-thumb-amber-700 scrollbar-track-amber-200/50">
             {activeMiniGames.map((game) => (
-              <React.Fragment key={game.id}>
+              // Item 5: Wrapper for fade-out
+              <div
+                key={game.id}
+                className={`transition-opacity duration-500 ease-in-out ${
+                  game.isVisuallyRemoving ? "opacity-0" : "opacity-100"
+                }`}
+              >
                 <MiniMiningInstance
                   id={game.id}
                   character={game.character}
@@ -379,37 +409,100 @@ export default function MiningGame({
                 />
                 {game.txHash &&
                   (game.uiState === "optimistic" ||
-                    game.uiState === "submitting") && (
+                    game.uiState === "submitting") &&
+                  !game.isVisuallyRemoving && ( // Hide monitor when fading
                     <TransactionMonitor
                       key={`monitor-${game.id}`}
                       txHash={game.txHash}
                       chainId={chain.id}
                       onCompletion={(success) => {
+                        const gameIdToUpdate = game.id;
+                        const FADE_START_DELAY = 1500; // Time to show confirmed/failed status
+                        const FADE_DURATION = 500; // CSS animation duration
+
                         setActiveMiniGames((prev) =>
                           prev.map((g) => {
-                            if (g.id === game.id) {
+                            if (g.id === gameIdToUpdate) {
                               return {
                                 ...g,
                                 uiState: success ? "confirmed" : "failed",
                                 finalizedTimestamp: Date.now(),
+                                isVisuallyRemoving: false, // Reset in case it was pre-failed
                               };
                             }
                             return g;
                           })
                         );
+
+                        // Start fade-out process
+                        setTimeout(() => {
+                          setActiveMiniGames((prev) =>
+                            prev.map((g) =>
+                              g.id === gameIdToUpdate
+                                ? { ...g, isVisuallyRemoving: true }
+                                : g
+                            )
+                          );
+                        }, FADE_START_DELAY);
+
+                        // Remove from DOM after fade
+                        setTimeout(() => {
+                          setActiveMiniGames((prev) =>
+                            prev.filter((g) => g.id !== gameIdToUpdate)
+                          );
+                        }, FADE_START_DELAY + FADE_DURATION);
                       }}
                     />
                   )}
-              </React.Fragment>
+              </div>
             ))}
+            {activeMiniGames.length === 0 && (
+              <div className="flex-1 flex items-center justify-center text-center text-[#5a4a1a]/70 p-4">
+                <p className="text-lg">
+                  No trees felled yet! Get to choppin&apos; by clicking
+                  &apos;CLICK TO MINE!&apos;
+                  <br />
+                  Your mighty swings (transactions) will appear here.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
-      <style>
-        {`.hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; } 
-                .scrollbar-thin::-webkit-scrollbar { height: 8px; width: 8px; } 
-                .scrollbar-thumb-amber-700::-webkit-scrollbar-thumb { background-color: #b45309; border-radius: 4px;} 
-                .scrollbar-track-amber-200\/50::-webkit-scrollbar-track { background-color: rgba(253, 230, 138, 0.5); border-radius: 4px; }`}
+      <style jsx global>
+        {`
+          @keyframes subtle-grow-shrink {
+            0%,
+            100% {
+              transform: scale(1);
+            }
+            50% {
+              transform: scale(1.03);
+            }
+          }
+          .animate-subtle-grow-shrink {
+            animation: subtle-grow-shrink 3s infinite ease-in-out;
+          }
+          .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+          }
+          .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+          .scrollbar-thin::-webkit-scrollbar {
+            height: 8px;
+            width: 8px;
+          }
+          .scrollbar-thumb-amber-700::-webkit-scrollbar-thumb {
+            background-color: #b45309;
+            border-radius: 4px;
+          }
+          .scrollbar-track-amber-200\\/50::-webkit-scrollbar-track {
+            background-color: rgba(253, 230, 138, 0.5);
+            border-radius: 4px;
+          }
+        `}
       </style>
     </div>
   );
