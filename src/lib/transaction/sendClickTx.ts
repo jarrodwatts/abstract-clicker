@@ -1,5 +1,5 @@
 import { COOKIE_CLICKER_CONTRACT_ADDRESS } from "@/const/contracts";
-import { chain } from "@/const/chain";
+import { API_URL, chain } from "@/const/chain";
 import { Account, http, toFunctionSelector } from "viem";
 import {
   createSessionClient,
@@ -147,7 +147,7 @@ export default async function signClickTx(
 export async function sendRawTransactionWithDetailedOutput(
   signedTransaction: string
 ) {
-  const response = await fetch("https://api.testnet.abs.xyz", {
+  const response = await fetch(API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
