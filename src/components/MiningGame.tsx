@@ -269,10 +269,11 @@ export default function MiningGame({
               : game
           )
         );
-      } catch (error: any) {
+      } catch (error) {
         console.error("Error submitting transaction:", error);
         const errorMessage =
-          error.message || "Transaction failed for an unknown reason.";
+          (error instanceof Error ? error.message : String(error)) ||
+          "Transaction failed for an unknown reason.";
         setActiveMiniGames((prev) =>
           prev.map((g) =>
             g.id === gameId
@@ -408,10 +409,10 @@ export default function MiningGame({
               : game
           )
         );
-      } catch (error: any) {
+      } catch (error) {
         console.error("[AutoClick] Error submitting transaction:", error);
         const errorMessage =
-          error.message ||
+          (error instanceof Error ? error.message : String(error)) ||
           "Auto-click transaction failed for an unknown reason.";
         // Attempt to find the gameId. If the error occurred before newMiniGameId was set,
         // this part might not correctly identify the game.
@@ -460,6 +461,7 @@ export default function MiningGame({
       nonceQuery, // Added nonceQuery
       incrementClickCount, // Added incrementClickCount
       isTransactionReady, // Added isTransactionReady dependency
+      activeMiniGames, // Added activeMiniGames to dependency array
     ]
   );
 

@@ -77,7 +77,6 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   const treeAnimationRef = useRef<number | null>(null);
   let bgColorClass = "bg-transparent";
   let borderColorClass = "border-transparent";
-  let statusText = "";
 
   const currentActionName =
     uiState === "submitting"
@@ -322,19 +321,15 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   if (uiState === "submitting") {
     bgColorClass = "bg-orange-500/20";
     borderColorClass = "border-orange-500";
-    statusText = "Submitting Transaction...";
   } else if (uiState === "optimistic") {
     bgColorClass = "bg-green-500/20";
     borderColorClass = "border-green-500";
-    statusText = "Optimistically Confirmed.";
   } else if (uiState === "confirmed") {
     bgColorClass = "bg-green-600";
     borderColorClass = "border-green-700";
-    statusText = "Confirmed";
   } else if (uiState === "failed") {
     bgColorClass = "bg-red-600";
     borderColorClass = "border-red-700";
-    statusText = "Mining Failed.";
   }
 
   const isLinkable =
