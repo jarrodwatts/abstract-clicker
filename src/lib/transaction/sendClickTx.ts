@@ -152,7 +152,7 @@ export default async function signClickTx(
         "Transaction fee too low for current network conditions";
     } else {
       // For unknown errors, use a generic message with the error code
-      humanReadableError = `Transaction failed (Error ${errorCode})`;
+      humanReadableError = `Transaction failed (Error ${errorMessage})`;
     }
 
     throw new Error(humanReadableError);

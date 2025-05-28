@@ -79,7 +79,7 @@ export default function LoginFlow() {
     "w-full min-h-[48px] flex items-center justify-center gap-4 p-3 transition-transform duration-150 bg-[#fffbe6] border-4 border-[#a86b2d] rounded-[32px] shadow-[0_4px_16px_0_rgba(80,40,10,0.18)] relative cursor-pointer hover:bg-[#fffad1] hover:border-[#8b5a2b] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed text-[#5a4a1a] font-bold text-base md:text-lg";
 
   return (
-    <div className="w-full max-w-md mx-auto p-0 md:p-6 space-y-6 text-center flex flex-col items-center min-h-[350px]">
+    <div className="w-full max-w-md mx-auto p-0 space-y-6 text-center flex flex-col items-center min-h-[300px]">
       <div className="flex justify-center min-h-[200px] h-[200px]">
         <AnimationPreview
           character={character}
@@ -118,7 +118,7 @@ export default function LoginFlow() {
         </div>
 
         {/* Status Message - Fixed height container */}
-        <div className="h-6 mt-12">
+        <div className="h-6 mt-6 lg:mt-12">
           <div
             className={`text-sm transition-opacity duration-200 ${
               hasError ? "text-red-500" : "text-gray-600"
