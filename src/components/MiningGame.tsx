@@ -131,6 +131,7 @@ export default function MiningGame({
   const [burstingWoodEmojis, setBurstingWoodEmojis] = useState<
     BurstingWoodEmoji[]
   >([]); // New state for emojis
+  const [isTransactionReady, setIsTransactionReady] = useState(false); // New state for transaction readiness
 
   // Refs for height synchronization
   const leftColumnRef = useRef<HTMLDivElement>(null);
@@ -307,6 +308,19 @@ export default function MiningGame({
         return;
       }
 
+      // Ensure transaction prerequisites are met before allowing auto-click
+      if (!isTransactionReady) {
+        const lumberjack = unlockedLumberjacksRef.current.find(
+          (lj) => lj.lumberjackId === lumberjackId
+        );
+        console.warn(
+          `[AutoClick] Transaction prerequisites not met for ${
+            lumberjack?.displayName || lumberjackId
+          }. Auto-click skipped.`
+        );
+        return;
+      }
+
       isAutoClickProcessingRef.current = true;
       try {
         const lumberjack = unlockedLumberjacksRef.current.find(
@@ -317,28 +331,31 @@ export default function MiningGame({
           console.warn(
             `[AutoClick] Lumberjack with ID ${lumberjackId} not found in ref. Skipping autoclick.`
           );
+          isAutoClickProcessingRef.current = false;
           return;
         }
+
+        // Re-instating necessary checks, assuming isTransactionReady handles the core logic
+        // but TypeScript needs explicit proof within this scope.
+        // However, it's safer to still have checks or use optional chaining if the effect setting isTransactionReady
+        // might somehow not perfectly align or if direct usage later still flags linting issues.
 
         if (
           !address ||
           !sessionData?.privateKey ||
           !gasEstimateQuery.data ||
-          typeof gasEstimateQuery.data.gasLimit === "undefined" ||
-          typeof gasEstimateQuery.data.maxFeePerGas === "undefined" ||
-          typeof gasEstimateQuery.data.maxPriorityFeePerGas === "undefined"
+          nonceQuery.nonce === undefined
         ) {
           console.warn(
-            `[AutoClick] Core prerequisites (address, session, gas estimate data) not met for lumberjack ${lumberjack.displayName}. Skipping autoclick.`,
-            { gasEstimateData: gasEstimateQuery.data }
+            `[AutoClick] Critical data missing despite isTransactionReady=true for lumberjack ${lumberjack.displayName}. This indicates a potential logic flaw. Skipping.`,
+            {
+              address,
+              sessionData,
+              gasEstimateQueryData: gasEstimateQuery.data,
+              nonce: nonceQuery.nonce,
+            }
           );
-          return;
-        }
-
-        if (nonceQuery.nonce === undefined) {
-          console.warn(
-            `[AutoClick] Nonce is not yet initialized for lumberjack ${lumberjack.displayName}. Skipping autoclick this cycle.`
-          );
+          isAutoClickProcessingRef.current = false;
           return;
         }
 
@@ -363,11 +380,8 @@ export default function MiningGame({
           [newMiniGame, ...prevGames].slice(0, 50)
         );
 
-        // Call submitOptimisticTransaction for the actual transaction logic
-        // This reuses the logic for prerequisites, signing, and UI updates
-        const signer = privateKeyToAccount(sessionData.privateKey); // Already have signer logic in submitOptimisticTransaction, but it's not directly callable with all params.
-        // For now, let's duplicate the tx sending part.
-        // A better refactor would be to extract the core transaction sending logic.
+        const signer = privateKeyToAccount(sessionData.privateKey);
+
         const { txHash } = await signClickTx(
           address,
           signer,
@@ -436,6 +450,7 @@ export default function MiningGame({
       setActiveMiniGames,
       nonceQuery, // Added nonceQuery
       incrementClickCount, // Added incrementClickCount
+      isTransactionReady, // Added isTransactionReady dependency
     ]
   );
 
@@ -481,9 +496,31 @@ export default function MiningGame({
     };
   }, [unlockedLumberjacks]);
 
+  // Effect to determine if transactions are ready
+  useEffect(() => {
+    const ready =
+      !!address &&
+      !!sessionData?.privateKey &&
+      !!gasEstimateQuery.data &&
+      typeof gasEstimateQuery.data.gasLimit !== "undefined" &&
+      typeof gasEstimateQuery.data.maxFeePerGas !== "undefined" &&
+      typeof gasEstimateQuery.data.maxPriorityFeePerGas !== "undefined" &&
+      typeof nonceQuery.nonce !== "undefined";
+    setIsTransactionReady(ready);
+  }, [address, sessionData, gasEstimateQuery.data, nonceQuery.nonce]);
+
   const handleGameAreaClick = (event: React.MouseEvent<HTMLDivElement>) => {
     const currentLocalClick = localClickCount + 1;
     setLocalClickCount(currentLocalClick);
+
+    // Ensure transaction prerequisites are met
+    if (!isTransactionReady) {
+      console.warn(
+        "[ManualClick] Transaction prerequisites not met. Click ignored."
+      );
+      // Optionally, provide user feedback here, e.g., a toast message or disable the click area visually
+      return;
+    }
 
     // Ensure nonce is initialized before trying to increment it
     if (nonceQuery.nonce === undefined) {
