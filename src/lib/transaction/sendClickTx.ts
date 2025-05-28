@@ -131,7 +131,6 @@ export default async function signClickTx(
 
     // Parse common error messages to make them more user-friendly
     const errorMessage = response.error.message || "";
-    const errorCode = response.error.code;
 
     let humanReadableError = "";
 
