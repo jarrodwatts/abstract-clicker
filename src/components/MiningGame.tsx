@@ -328,6 +328,8 @@ export default function MiningGame({
       }
 
       isAutoClickProcessingRef.current = true;
+      let gameIdForThisAutoClick: string | undefined; // Defined outside try to be accessible in catch
+
       try {
         const lumberjack = unlockedLumberjacksRef.current.find(
           (lj) => lj.lumberjackId === lumberjackId
@@ -340,11 +342,6 @@ export default function MiningGame({
           isAutoClickProcessingRef.current = false;
           return;
         }
-
-        // Re-instating necessary checks, assuming isTransactionReady handles the core logic
-        // but TypeScript needs explicit proof within this scope.
-        // However, it's safer to still have checks or use optional chaining if the effect setting isTransactionReady
-        // might somehow not perfectly align or if direct usage later still flags linting issues.
 
         if (
           !address ||
@@ -373,9 +370,9 @@ export default function MiningGame({
         incrementClickCount();
         const nonceForThisTx = nonceQuery.incrementNonce();
 
-        const newMiniGameId = uuidv4();
+        gameIdForThisAutoClick = uuidv4(); // Assign the ID here
         const newMiniGame: ActiveMiniGame = {
-          id: newMiniGameId,
+          id: gameIdForThisAutoClick, // Use the generated ID
           character: lumberjack.character,
           initialClickCount: clickCountRef.current ?? 0,
           uiState: "submitting",
@@ -399,7 +396,7 @@ export default function MiningGame({
         );
         setActiveMiniGames((prevGames) =>
           prevGames.map((game) =>
-            game.id === newMiniGameId
+            game.id === gameIdForThisAutoClick // Use the ID for success update
               ? {
                   ...game,
                   txHash: txHash,
@@ -409,46 +406,52 @@ export default function MiningGame({
               : game
           )
         );
-      } catch (error) {
+      } catch (error: any) {
         console.error("[AutoClick] Error submitting transaction:", error);
         const errorMessage =
           (error instanceof Error ? error.message : String(error)) ||
           "Auto-click transaction failed for an unknown reason.";
-        // Attempt to find the gameId. If the error occurred before newMiniGameId was set,
-        // this part might not correctly identify the game.
-        // However, the most likely place for an error after newMiniGameId is set is signClickTx or UI updates.
-        const gameIdForError =
-          activeMiniGames.find((mg) => mg.uiState === "submitting")?.id ||
-          "unknown-autoclick-game";
 
-        setActiveMiniGames((prev) =>
-          prev.map((g) =>
-            g.id === gameIdForError // Use the potentially found game ID
-              ? {
-                  ...g,
-                  uiState: "failed",
-                  errorMessage: errorMessage, // Store the actual error message
-                  finalizedTimestamp: Date.now(),
-                  isVisuallyRemoving: false,
-                }
-              : g
-          )
-        );
-        // Start fade-out process for failed submission
-        const FADE_START_DELAY = 1500;
-        const FADE_DURATION = 500;
-        setTimeout(() => {
+        if (gameIdForThisAutoClick) {
+          // Check if the ID was assigned
           setActiveMiniGames((prev) =>
             prev.map((g) =>
-              g.id === gameIdForError ? { ...g, isVisuallyRemoving: true } : g
+              g.id === gameIdForThisAutoClick // Use the specific ID for error update
+                ? {
+                    ...g,
+                    uiState: "failed",
+                    errorMessage: errorMessage,
+                    finalizedTimestamp: Date.now(),
+                    isVisuallyRemoving: false,
+                  }
+                : g
             )
           );
-        }, FADE_START_DELAY);
-        setTimeout(() => {
-          setActiveMiniGames((prev) =>
-            prev.filter((g) => g.id !== gameIdForError)
+          // Start fade-out process for the failed game
+          const FADE_START_DELAY = 1500;
+          const FADE_DURATION = 500;
+          setTimeout(() => {
+            setActiveMiniGames((prev) =>
+              prev.map((g) =>
+                g.id === gameIdForThisAutoClick
+                  ? { ...g, isVisuallyRemoving: true }
+                  : g
+              )
+            );
+          }, FADE_START_DELAY);
+          setTimeout(() => {
+            setActiveMiniGames((prev) =>
+              prev.filter((g) => g.id !== gameIdForThisAutoClick)
+            );
+          }, FADE_START_DELAY + FADE_DURATION);
+        } else {
+          // This case should ideally not happen if an error occurs after gameId assignment.
+          // If error is before, there's no specific mini-game UI element yet to update.
+          console.error(
+            "[AutoClick] Could not associate error with a specific mini-game ID as it was not set."
           );
-        }, FADE_START_DELAY + FADE_DURATION);
+          // Optionally, you could try a more generic error display or log, but it won't be tied to a specific game instance.
+        }
       } finally {
         isAutoClickProcessingRef.current = false;
       }
@@ -458,10 +461,10 @@ export default function MiningGame({
       sessionData,
       gasEstimateQuery.data,
       setActiveMiniGames,
-      nonceQuery, // Added nonceQuery
-      incrementClickCount, // Added incrementClickCount
-      isTransactionReady, // Added isTransactionReady dependency
-      activeMiniGames, // Added activeMiniGames to dependency array
+      nonceQuery,
+      incrementClickCount,
+      isTransactionReady,
+      activeMiniGames, // Keeping this in deps as per current user file, though it might be worth re-evaluating later.
     ]
   );
 
