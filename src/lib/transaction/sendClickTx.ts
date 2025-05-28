@@ -109,24 +109,34 @@ export default async function signClickTx(
   if (response.error) {
     // Handle RPC errors
     console.error("RPC Error:", response.error);
-    // Specific handling for "known transaction"
-    if (
-      response.error.message &&
-      response.error.message.includes("known transaction")
+
+    // Parse common error messages to make them more user-friendly
+    const errorMessage = response.error.message || "";
+    const errorCode = response.error.code;
+
+    let humanReadableError = "";
+
+    if (errorMessage.includes("insufficient funds")) {
+      humanReadableError = "ETH balance too low.";
+    } else if (errorMessage.includes("known transaction")) {
+      humanReadableError = "Nonce issue. Please refresh.";
+    } else if (errorMessage.includes("nonce too low")) {
+      humanReadableError = "Nonce issue. Please refresh.";
+    } else if (errorMessage.includes("gas required exceeds allowance")) {
+      humanReadableError = "Gas issue. Please refresh.";
+    } else if (errorMessage.includes("replacement transaction underpriced")) {
+      humanReadableError = "Gas issue. Please refresh.";
+    } else if (
+      errorMessage.includes("max fee per gas less than block base fee")
     ) {
-      // This case might not always be an "error" in the sense that the tx failed,
-      // but rather that it was already processed or is in mempool.
-      // For now, we'll throw a specific error.
-      // The calling code (MiningGame.tsx) might need to handle this differently,
-      // e.g., by not immediately marking the mini-game as "failed"
-      // or by attempting to fetch the transaction receipt if a hash was previously stored.
-      throw new Error(
-        `Known transaction: ${response.error.message} (Code: ${response.error.code})`
-      );
+      humanReadableError =
+        "Transaction fee too low for current network conditions";
+    } else {
+      // For unknown errors, use a generic message with the error code
+      humanReadableError = `Transaction failed (Error ${errorCode})`;
     }
-    throw new Error(
-      `RPC Error: ${response.error.message} (Code: ${response.error.code})`
-    );
+
+    throw new Error(humanReadableError);
   }
 
   if (!response.result || !response.result.transactionHash) {
