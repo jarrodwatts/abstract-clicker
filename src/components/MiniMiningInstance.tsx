@@ -50,7 +50,6 @@ import { renderNatureTile } from "@/utils/natureImages";
 interface MiniMiningInstanceProps {
   character: Character; // character to animate
   // selectedAxe: AxeType; // again originally there was a selection of different axes
-  initialClickCount: number; // i honestly don't know what this is for lol
   instanceCanvasSize?: number; // size of the canvas to draw
   uiState: "submitting" | "optimistic" | "confirmed" | "failed"; // state of the instance
   errorMessage?: string; // error message to display if any
@@ -70,7 +69,6 @@ interface MiniMiningInstanceProps {
 const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   character,
   // selectedAxe,
-  initialClickCount,
   instanceCanvasSize = 64,
   uiState,
   errorMessage,

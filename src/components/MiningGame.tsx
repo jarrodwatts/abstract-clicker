@@ -812,7 +812,6 @@ export default function MiningGame({
               >
                 <MiniMiningInstance
                   character={game.character}
-                  initialClickCount={game.initialClickCount}
                   uiState={game.uiState}
                   errorMessage={game.errorMessage}
                   clickTimestamp={game.clickTimestamp}

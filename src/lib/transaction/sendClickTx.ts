@@ -115,7 +115,7 @@ export default async function signClickTx(
   });
 
   // Sign the transaction using the session client
-  // @ts-expect-error
+  // @ts-expect-error - just annoying type mismatch but its fine.
   const signature = await sessionClient.signTransaction(preparedTransaction);
 
   // Send the signature to the zks_sendRawTransactionWithDetailedOutput endpoint
