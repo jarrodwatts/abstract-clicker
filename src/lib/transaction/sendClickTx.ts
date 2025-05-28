@@ -69,7 +69,10 @@ export default async function signClickTx(
   agwAddress: `0x${string}`,
   sessionSigner: Account,
   session: SessionConfig,
-  nonce: number
+  nonce: number,
+  gas: bigint,
+  maxFeePerGas: bigint,
+  maxPriorityFeePerGas: bigint
 ): Promise<{ txHash: `0x${string}`; timeTaken: number }> {
   const startTime = performance.now();
 
@@ -80,9 +83,9 @@ export default async function signClickTx(
     chain,
     nonce,
     chainId: chain.id,
-    maxPriorityFeePerGas: 0n,
-    maxFeePerGas: 30000000n,
-    gas: 350000n,
+    gas,
+    maxFeePerGas,
+    maxPriorityFeePerGas,
   });
 
   const sessionClient = createSessionClient({

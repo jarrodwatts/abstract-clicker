@@ -205,12 +205,15 @@ export default function MiningGame({
         !address ||
         !sessionData?.privateKey ||
         !gasEstimateQuery.data ||
+        typeof gasEstimateQuery.data.gasLimit === "undefined" ||
+        typeof gasEstimateQuery.data.maxFeePerGas === "undefined" ||
+        typeof gasEstimateQuery.data.maxPriorityFeePerGas === "undefined" ||
         nonceForTx === undefined
       ) {
         console.error("Transaction pre-requisites not met", {
           address,
           hasSessionPrivateKey: !!sessionData?.privateKey,
-          hasGasEstimate: !!gasEstimateQuery.data,
+          gasEstimateData: gasEstimateQuery.data,
           nonceForTx,
         });
         setActiveMiniGames((prev) =>
@@ -246,7 +249,10 @@ export default function MiningGame({
           address,
           signer,
           sessionData.session,
-          nonceForTx
+          nonceForTx,
+          gasEstimateQuery.data.gasLimit,
+          gasEstimateQuery.data.maxFeePerGas,
+          gasEstimateQuery.data.maxPriorityFeePerGas
         );
         setActiveMiniGames((prevGames) =>
           prevGames.map((game) =>
@@ -314,9 +320,17 @@ export default function MiningGame({
           return;
         }
 
-        if (!address || !sessionData?.privateKey || !gasEstimateQuery.data) {
+        if (
+          !address ||
+          !sessionData?.privateKey ||
+          !gasEstimateQuery.data ||
+          typeof gasEstimateQuery.data.gasLimit === "undefined" ||
+          typeof gasEstimateQuery.data.maxFeePerGas === "undefined" ||
+          typeof gasEstimateQuery.data.maxPriorityFeePerGas === "undefined"
+        ) {
           console.warn(
-            `[AutoClick] Core prerequisites (address, session, gas estimate) not met for lumberjack ${lumberjack.displayName}. Skipping autoclick.`
+            `[AutoClick] Core prerequisites (address, session, gas estimate data) not met for lumberjack ${lumberjack.displayName}. Skipping autoclick.`,
+            { gasEstimateData: gasEstimateQuery.data }
           );
           return;
         }
@@ -348,16 +362,69 @@ export default function MiningGame({
         setActiveMiniGames((prevGames) =>
           [newMiniGame, ...prevGames].slice(0, 50)
         );
-        await submitOptimisticTransaction(
-          newMiniGameId,
-          lumberjack.character,
-          nonceForThisTx
+
+        // Call submitOptimisticTransaction for the actual transaction logic
+        // This reuses the logic for prerequisites, signing, and UI updates
+        const signer = privateKeyToAccount(sessionData.privateKey); // Already have signer logic in submitOptimisticTransaction, but it's not directly callable with all params.
+        // For now, let's duplicate the tx sending part.
+        // A better refactor would be to extract the core transaction sending logic.
+        const { txHash } = await signClickTx(
+          address,
+          signer,
+          sessionData.session,
+          nonceForThisTx,
+          gasEstimateQuery.data.gasLimit,
+          gasEstimateQuery.data.maxFeePerGas,
+          gasEstimateQuery.data.maxPriorityFeePerGas
+        );
+        setActiveMiniGames((prevGames) =>
+          prevGames.map((game) =>
+            game.id === newMiniGameId
+              ? {
+                  ...game,
+                  txHash: txHash,
+                  uiState: "optimistic",
+                  optimisticConfirmTimestamp: Date.now(),
+                }
+              : game
+          )
         );
       } catch (error) {
-        console.error(
-          `[AutoClick] Unhandled error during performAutoClick for ${lumberjackId}:`,
-          error
+        console.error("[AutoClick] Error submitting transaction:", error);
+        // Attempt to find the gameId. If the error occurred before newMiniGameId was set,
+        // this part might not correctly identify the game.
+        // However, the most likely place for an error after newMiniGameId is set is signClickTx or UI updates.
+        const gameIdForError =
+          activeMiniGames.find((mg) => mg.uiState === "submitting")?.id ||
+          "unknown-autoclick-game";
+
+        setActiveMiniGames((prev) =>
+          prev.map((g) =>
+            g.id === gameIdForError // Use the potentially found game ID
+              ? {
+                  ...g,
+                  uiState: "failed",
+                  finalizedTimestamp: Date.now(),
+                  isVisuallyRemoving: false,
+                }
+              : g
+          )
         );
+        // Start fade-out process for failed submission
+        const FADE_START_DELAY = 1500;
+        const FADE_DURATION = 500;
+        setTimeout(() => {
+          setActiveMiniGames((prev) =>
+            prev.map((g) =>
+              g.id === gameIdForError ? { ...g, isVisuallyRemoving: true } : g
+            )
+          );
+        }, FADE_START_DELAY);
+        setTimeout(() => {
+          setActiveMiniGames((prev) =>
+            prev.filter((g) => g.id !== gameIdForError)
+          );
+        }, FADE_START_DELAY + FADE_DURATION);
       } finally {
         isAutoClickProcessingRef.current = false;
       }
@@ -366,9 +433,9 @@ export default function MiningGame({
       address,
       sessionData,
       gasEstimateQuery.data,
-      nonceQuery,
-      incrementClickCount,
-      submitOptimisticTransaction,
+      setActiveMiniGames,
+      nonceQuery, // Added nonceQuery
+      incrementClickCount, // Added incrementClickCount
     ]
   );
 
