@@ -21,12 +21,11 @@ import { Pointer } from "./magicui/pointer";
 import { v4 as uuidv4 } from "uuid";
 import LumberjackDisplayCard from "./LumberjackDisplayCard";
 
-// New Types for Lumberjacks
 interface LumberjackTier {
   unlockThreshold: number;
   clickIntervalMs: number;
   displayName: string;
-  id: string; // Unique ID for the tier
+  id: string;
 }
 
 interface ActiveLumberjack extends LumberjackTier {
@@ -35,7 +34,6 @@ interface ActiveLumberjack extends LumberjackTier {
   timerId?: NodeJS.Timeout; // To store the interval timer
 }
 
-// New interface for bursting wood emojis
 interface BurstingWoodEmoji {
   id: string;
   x: number; // viewport X
@@ -85,7 +83,6 @@ const LUMBERJACK_TIERS: LumberjackTier[] = [
   },
 ];
 
-// Data structure for active mini-games
 interface ActiveMiniGame {
   id: string;
   character: Character;
@@ -99,24 +96,43 @@ interface ActiveMiniGame {
   isVisuallyRemoving?: boolean; // For fade-out effect
 }
 
+/**
+ * The core code for the game.
+ * Controls everything in the game like total click count, clicking, spawning the miner cards, etc.
+ */
 export default function MiningGame({
   character: initialCharacter,
 }: {
   character?: Character;
 }) {
+
+  // Get connected wallet address
   const { address } = useAccount();
+
+  // Get session key data
   const { data: sessionData } = useAbstractSession();
+
+  // Read the total number of clicks the uesr has made
   const {
     clickCount,
     isLoading: isClicksLoading,
     incrementClickCount,
   } = useUserClicks();
 
+
+  // Generate a random character to use throughout the game
   const [character] = useState(
     () => initialCharacter || generateRandomCharacter()
   );
+
+  // Keep track of a separate, "local" click count that is not stored onchain
+  // Mainly just used for annoying state management
   const [localClickCount, setLocalClickCount] = useState(0);
+
+  // Keep track of all the active mini-games (the cards that spawn when you click)
   const [activeMiniGames, setActiveMiniGames] = useState<ActiveMiniGame[]>([]);
+
+  // Keep track of all the unlocked lumberjacks
   const [unlockedLumberjacks, setUnlockedLumberjacks] = useState<
     ActiveLumberjack[]
   >([]);
@@ -126,18 +142,25 @@ export default function MiningGame({
   const performAutoClickRef = useRef<((id: string) => Promise<void>) | null>(
     null
   );
+
+  // Flag to prevent multiple auto-clicks from happening at once
   const isAutoClickProcessingRef = useRef(false);
 
+  // Animation states
   const [pulseClickCount, setPulseClickCount] = useState(false);
   const [burstingWoodEmojis, setBurstingWoodEmojis] = useState<
     BurstingWoodEmoji[]
-  >([]); // New state for emojis
-  const [isTransactionReady, setIsTransactionReady] = useState(false); // New state for transaction readiness
+  >([]);
 
-  // Refs for height synchronization
+  // Flag to prevent users submitting transactions before things are ready.
+  // i.e. nonce, gas estimation, etc.
+  const [isTransactionReady, setIsTransactionReady] = useState(false);
+
+  // Refs for height synchronization of the left and right columns of the game
   const leftColumnRef = useRef<HTMLDivElement>(null);
   const rightScrollableContentRef = useRef<HTMLDivElement>(null);
 
+  // Animate the total click count
   useEffect(() => {
     if (typeof clickCount === "number" && clickCount > 0 && !isClicksLoading) {
       setPulseClickCount(true);
@@ -146,6 +169,7 @@ export default function MiningGame({
     }
   }, [clickCount, isClicksLoading]);
 
+  // Sync the height of the left and right columns of the game
   useEffect(() => {
     const synchronizeHeights = () => {
       if (leftColumnRef.current && rightScrollableContentRef.current) {
@@ -156,10 +180,10 @@ export default function MiningGame({
 
     synchronizeHeights(); // Initial sync
 
-    // Optional: Re-sync if activeMiniGames length changes, as this could affect left column height (though less likely with current fixed content)
+    // This is kind of disgusting AI code but seems to be ok
+    // Re-sync if activeMiniGames length changes, as this could affect left column height (though less likely with current fixed content)
     // This might be too frequent if many games are added/removed quickly.
     // A ResizeObserver on the left column would be more performant for dynamic content changes in left col.
-
     window.addEventListener("resize", synchronizeHeights);
     return () => {
       window.removeEventListener("resize", synchronizeHeights);
@@ -198,11 +222,15 @@ export default function MiningGame({
     }
   }, [clickCount, unlockedLumberjacks]);
 
+  // Load gas and nonce data upfront
   const gasEstimateQuery = useClickGasEstimate();
   const nonceQuery = useTransactionNonce();
 
+  // Submit the "Click" transaction using the user's session key
   const submitOptimisticTransaction = useCallback(
     async (gameId: string, clickerCharacter: Character, nonceForTx: number) => {
+
+      // First check to see if fields we need have loaded. If not, we can't submit the transaction.
       if (
         !address ||
         !sessionData?.privateKey ||
@@ -246,7 +274,12 @@ export default function MiningGame({
         }, FADE_START_DELAY + FADE_DURATION);
         return;
       }
+      // If we have all the data we need, we can submit the transaction.
+
+      // Create a viem account from the decrypted session private key from local storage.
       const signer = privateKeyToAccount(sessionData.privateKey);
+
+      // Try to submit the transaction.
       try {
         const { txHash } = await signClickTx(
           address,
@@ -305,6 +338,7 @@ export default function MiningGame({
     [address, sessionData, gasEstimateQuery.data, setActiveMiniGames]
   );
 
+  // Manage the auto-click functionality of lumberjacks
   const performAutoClick = useCallback(
     async (lumberjackId: string) => {
       if (isAutoClickProcessingRef.current) {

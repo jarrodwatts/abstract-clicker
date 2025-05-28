@@ -9,6 +9,10 @@ interface LumberjackDisplayCardProps {
   canvasSize?: number;
 }
 
+/**
+ * This component is how the little miner gets rendered inside the @MiniMiningInstance.tsx
+ * It's a simple component that renders the character and the animation.
+ */
 const LumberjackDisplayCard: React.FC<LumberjackDisplayCardProps> = ({
   character,
   canvasSize = 48, // Adjusted default size for the card, can be overridden by MiningGame.tsx if needed

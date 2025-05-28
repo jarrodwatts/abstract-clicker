@@ -3,6 +3,13 @@ import { useState, useEffect } from "react";
 import getNonce from "@/lib/transaction/getNonce";
 import { useAccount } from "wagmi";
 
+/**
+ * Hook to get the current nonce for a wallet address
+ * This is used to prevent users from submitting transactions with the same nonce.
+ * It first loads the nonce from on-chain, then increments it locally.
+ * Allows for multiple transactions to be fired off in quick succession.
+ * i.e. have multilpe transactions from the same user sitting in the mempool
+ */
 export function useTransactionNonce() {
   const { address } = useAccount();
   const [localNonce, setLocalNonce] = useState<number | undefined>(undefined);

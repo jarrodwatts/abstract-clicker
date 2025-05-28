@@ -6,6 +6,10 @@ interface DotPatternProps {
   className?: string;
 }
 
+/**
+ * This is just a background style component rendering some dots.
+ * Gives the background a nice pattern of dots and gradient basically.
+ */
 export function DotPattern({ className }: DotPatternProps) {
   return (
     <svg

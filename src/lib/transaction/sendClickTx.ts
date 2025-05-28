@@ -7,6 +7,12 @@ import {
 } from "@abstract-foundation/agw-client/sessions";
 import { walletClient } from "@/const/walletClient";
 
+// Here we just do some disgusting stuff to intercept RPC requests that are not neceessary
+// This is just a in-code hack since the AGW SDK doesn't have a function to call the
+// zks_sendRawTransactionWithDetailedOutput endpoint just yet.
+// So, it's a hack to use the convenience of the seession client SDK but also
+// have the ability to call the zks_sendRawTransactionWithDetailedOutput endpoint.
+
 // Store original fetch
 const originalFetch = global.fetch;
 
@@ -17,8 +23,8 @@ global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     input.includes(chain.rpcUrls.default.http[0])
   ) {
     if (init?.body) {
+      // We always know chain id for AGW so we can just return it
       const body = JSON.parse(init.body as string);
-      // Chain ID
       if (body.method === "eth_chainId") {
         return new Response(
           JSON.stringify({
@@ -31,6 +37,8 @@ global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         );
       }
 
+      // This is a check to see if the AGW is deployed or not yet
+      // We are optimistically overriding it to assume it's deployed
       if (body.method === "eth_getCode") {
         return new Response(
           JSON.stringify({
@@ -44,6 +52,8 @@ global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
         );
       }
 
+      // This is a check to read some info about the AGW, like validation hooks etc.
+      // We don't need this for the game, so we can just return this here.
       if (
         body.method === "eth_call" &&
         body.params[0].data ==
@@ -65,6 +75,11 @@ global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
   return originalFetch(input, init);
 };
 
+/**
+ * This is the function that performs all the actual magic of the app.
+ * It submits the transaction to the zks_sendRawTransactionWithDetailedOutput endpoint.
+ * Which immediately returns a tx hash + submits the tx on-chain.
+ */
 export default async function signClickTx(
   agwAddress: `0x${string}`,
   sessionSigner: Account,
@@ -74,8 +89,10 @@ export default async function signClickTx(
   maxFeePerGas: bigint,
   maxPriorityFeePerGas: bigint
 ): Promise<{ txHash: `0x${string}`; timeTaken: number }> {
+  // Begin the timer now to see how long it takes to submit the transaction
   const startTime = performance.now();
 
+  // Format the transaction for EIP-712.
   const preparedTransaction = await walletClient.prepareTransactionRequest({
     to: COOKIE_CLICKER_CONTRACT_ADDRESS as `0x${string}`,
     data: toFunctionSelector("click()"),
@@ -88,6 +105,7 @@ export default async function signClickTx(
     maxPriorityFeePerGas,
   });
 
+  // Use the AGW session client to sign the transaction
   const sessionClient = createSessionClient({
     account: agwAddress,
     chain,
@@ -96,18 +114,19 @@ export default async function signClickTx(
     transport: http(chain.rpcUrls.default.http[0]),
   });
 
-  // @ts-expect-error - TODO: fix this
+  // Sign the transaction using the session client
+  // @ts-expect-error
   const signature = await sessionClient.signTransaction(preparedTransaction);
-  // 6. Send the raw transaction
+
+  // Send the signature to the zks_sendRawTransactionWithDetailedOutput endpoint
   const response = await sendRawTransactionWithDetailedOutput(signature);
 
+  // Stop the timer and log the time taken to get a tx hash back.
   const endTime = performance.now();
   console.log(`⏱️: ${(endTime - startTime).toFixed(2)}ms`);
 
-  console.log(response);
-
+  // Handle RPC errors
   if (response.error) {
-    // Handle RPC errors
     console.error("RPC Error:", response.error);
 
     // Parse common error messages to make them more user-friendly
@@ -157,6 +176,10 @@ export default async function signClickTx(
   };
 }
 
+/**
+ * This is the function that sends the transaction to the zks_sendRawTransactionWithDetailedOutput endpoint.
+ * It's a simple wrapper around the fetch call to the API.
+ */
 export async function sendRawTransactionWithDetailedOutput(
   signedTransaction: string
 ) {

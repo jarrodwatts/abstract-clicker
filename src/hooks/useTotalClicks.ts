@@ -4,6 +4,9 @@ import {
   COOKIE_CLICKER_CONTRACT_ABI,
 } from "@/const/contracts";
 
+/**
+ * Hook to read the total number of clicks from the contract from all players
+ */
 export default function useTotalClicks() {
   const { data: totalClicks, isLoading } = useReadContract({
     address: COOKIE_CLICKER_CONTRACT_ADDRESS,

@@ -9,6 +9,13 @@ import { useCreateAbstractSession } from "@/hooks/useCreateAbstractSession";
 import AnimationPreview from "./AnimationPreview";
 import MiningGame from "./MiningGame";
 
+/**
+ * Walk the user through a three step process to login and create a session before playing the game
+ * 1. Connect wallet
+ * 2. Create session
+ * 3. Play the game
+ * @returns
+ */
 export default function LoginFlow() {
   // Generate a random character to use throughout the login flow
   const [character] = useState(() => generateRandomCharacter());
@@ -117,8 +124,8 @@ export default function LoginFlow() {
               hasError ? "text-red-500" : "text-gray-600"
             } ${statusMessage ? "opacity-100" : "opacity-0"}`}
           >
-            {statusMessage || " "}{" "}
             {/* Space character maintains height when empty */}
+            {statusMessage || " "}{" "}
           </div>
         </div>
       </div>

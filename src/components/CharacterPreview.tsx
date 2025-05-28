@@ -10,6 +10,8 @@ interface CharacterCanvasProps {
 
 /**
  * Takes a character and renders each layer onto a canvas to preview the full character.
+ * Provides a simple way to preview what a character looks like in the game.
+ * This isn't used anywhere but is a nice way to preview the character.
  */
 const CharacterPreview: React.FC<CharacterCanvasProps> = ({ character }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);

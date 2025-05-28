@@ -9,6 +9,11 @@ interface TransactionMonitorProps {
   chainId?: number; // Optional: if your hook needs a specific chainId not derived from context
 }
 
+/**
+ * Simple invisible component that is used to monitor a transaction onchain.
+ * Once transactions are included in blocks on-chain, it fades the card out.
+ * It also shows a success or failure indicator.
+ */
 const TransactionMonitor: React.FC<TransactionMonitorProps> = ({
   txHash,
   onCompletion,

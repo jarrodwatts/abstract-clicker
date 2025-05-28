@@ -1,3 +1,4 @@
+/* Some generic styles of frames for the game */
 .gameFrame {
   background: #bfc98a;
   border: 10px solid #a86b2d;
@@ -7,6 +8,7 @@
   position: relative;
 }
 
+/* A thinner frame for the game */
 .gameFrameThin {
   background: #bfc98a;
   border: 4px solid #a86b2d;

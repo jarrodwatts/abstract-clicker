@@ -5,11 +5,13 @@ import actions from "@/const/actions";
 import characterProperties from "@/const/characterProperties";
 import Character from "@/types/Character";
 import { useCharacterImages } from "@/hooks/useCharacterImages";
-import { useFrameAnimation } from "@/hooks/useFrameAnimation";
+import { BASE_ANIMATION_SPEED_MS, useFrameAnimation } from "@/hooks/useFrameAnimation";
 import { drawCharacterLayers } from "@/utils/canvasUtils";
 import { renderNatureTile } from "@/utils/natureImages";
 
-// Types for weapon selection (re-defined or imported if shared)
+
+// These are not used anymore, but keeping if we want to introduce cosmetics later.
+// Types for weapon selection
 // type AxeType =
 //   | "axe"
 //   | "axe_wood"
@@ -19,6 +21,8 @@ import { renderNatureTile } from "@/utils/natureImages";
 //   | "axe_blue"
 //   | "axe_pink";
 
+// Originally, leaves exploded from the tree when you clicked it.
+// The game doesn't do this anymore, but maybe we can bring it back later.
 // Types for leaf particle animation
 // type Leaf = {
 //   id: string;
@@ -44,19 +48,25 @@ import { renderNatureTile } from "@/utils/natureImages";
 // ];
 
 interface MiniMiningInstanceProps {
-  character: Character;
-  // selectedAxe: AxeType;
-  initialClickCount: number;
-  instanceCanvasSize?: number;
-  uiState: "submitting" | "optimistic" | "confirmed" | "failed";
-  errorMessage?: string;
-  clickTimestamp: number;
-  optimisticConfirmTimestamp?: number;
-  finalizedTimestamp?: number;
-  blockExplorerBaseUrl?: string;
-  txHash?: `0x${string}`;
+  character: Character; // character to animate
+  // selectedAxe: AxeType; // again originally there was a selection of different axes
+  initialClickCount: number; // i honestly don't know what this is for lol
+  instanceCanvasSize?: number; // size of the canvas to draw
+  uiState: "submitting" | "optimistic" | "confirmed" | "failed"; // state of the instance
+  errorMessage?: string; // error message to display if any
+  clickTimestamp: number; // timestamp that the click happened
+  optimisticConfirmTimestamp?: number; // timestamp that the optimistic confirmation happened
+  finalizedTimestamp?: number; // timestamp that the final confirmation happened
+  blockExplorerBaseUrl?: string; // url to the block explorer
+  txHash?: `0x${string}`; // tx hash of the transaction
 }
 
+/**
+ * These are the cards that "spawn" every time a user clicks the game.
+ * It essentially is just a cool animation representing what is happening to the transaction.
+ * Most of the code is just overcomplicated stuff to animate a character chopping a tree
+ * Showing different colors for when the tx is preconfirmed, confirmed, or failed.
+ */
 const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   character,
   // selectedAxe,
@@ -70,14 +80,15 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   blockExplorerBaseUrl,
   txHash,
 }) => {
+  // Keep a reference to the canvas element
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  // const [leaves, setLeaves] = useState<Leaf[]>([]);
+  // const [leaves, setLeaves] = useState<Leaf[]>([]); // not used anymore
+  
   const animationLoopIdRef = useRef<number | null>(null);
   const [treeScale, setTreeScale] = useState(1);
   const treeAnimationRef = useRef<number | null>(null);
-  let bgColorClass = "bg-transparent";
-  let borderColorClass = "border-transparent";
 
+  // Bunch of constants to control what to render on the canvas
   const currentActionName =
     uiState === "submitting"
       ? "axe"
@@ -86,10 +97,8 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
       : uiState === "failed"
       ? "die"
       : "walk";
-
   const actualAction = actions[currentActionName] ? currentActionName : "walk";
   const actionToUse = actions[actualAction] ? actualAction : "walk";
-
   const direction = "right";
   const SPRITE_SCALE_FACTOR = 1;
   const CHARACTER_DRAW_SIZE = 32 * SPRITE_SCALE_FACTOR;
@@ -99,6 +108,11 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   const treeX = instanceCanvasSize - TREE_DRAW_SIZE - 8;
   const treeY = (instanceCanvasSize - TREE_DRAW_SIZE) / 2;
 
+  // Some style variables to control the background and border color of the card
+  let bgColorClass = "bg-transparent";
+  let borderColorClass = "border-transparent";
+
+  // How to load the character image files for each layer
   const getFilePathForLayer = useCallback(
     (layer: keyof typeof characterProperties) => {
       if (!character[layer] || !actions[actionToUse]) return "";
@@ -113,11 +127,8 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   );
 
   const getToolFilePath = useCallback(() => {
-    if (!actions[actionToUse] || actionToUse === "walk") return "";
-    // const toolType = actionToUse === "axe" ? selectedAxe : "axe";
-    // Always use the default axe visual, as axe selection is no longer a mechanic
-    const toolType = "axe";
-    return `animations/${actions[actionToUse].path}/e-tool/${toolType}.png`;
+    if (!actions[actionToUse] || actionToUse === "walk") return ""; // no tool animations for walking
+    return `animations/${actions[actionToUse].path}/e-tool/axe.png`;
   }, [actionToUse]);
 
   const { layerImages, toolImage, isLoading } = useCharacterImages(
@@ -130,16 +141,14 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   const isAnimatingForHook =
     uiState === "submitting" || uiState === "optimistic";
 
-  const { currentFrame, animationSpeed } = useFrameAnimation(
+  const { currentFrame } = useFrameAnimation(
     actionToUse,
     isAnimatingForHook,
     isLoading,
-    initialClickCount
   );
 
   useEffect(() => {
     if (uiState === "submitting" || uiState === "optimistic") {
-      // createLeafBurst();
       animateTree();
     }
   }, [uiState]);
@@ -158,7 +167,7 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
     if (!ctx) return;
 
     let lastTimestamp = 0;
-    const targetInterval = animationSpeed;
+    const targetInterval = BASE_ANIMATION_SPEED_MS;
 
     const gameLoop = (timestamp: number) => {
       // Determine if we should be in an active animation loop
@@ -284,7 +293,6 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
     treeX,
     treeY,
     currentFrame,
-    animationSpeed,
     TREE_DRAW_SIZE,
     CHARACTER_DRAW_SIZE,
   ]);
@@ -375,10 +383,6 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
           </span>
         );
       default:
-        // Log for default case
-        console.log(
-          `[MiniMiningInstance] getStatusIndicator: Hit default case. uiState: "${uiState}"`
-        );
         return null;
     }
   };

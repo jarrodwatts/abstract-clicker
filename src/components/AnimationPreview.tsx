@@ -9,7 +9,8 @@ import { useCharacterImages } from "@/hooks/useCharacterImages";
 import { useFrameAnimation } from "@/hooks/useFrameAnimation";
 import { drawCharacterLayers, CANVAS_SIZE } from "@/utils/canvasUtils";
 
-// Types for weapon selection
+// This is not used anymore, but keeping if we want to introduce cosmetics later.
+// We can animate many different colors of axe.
 type AxeType =
   | "axe"
   | "axe_wood"
@@ -19,17 +20,17 @@ type AxeType =
   | "axe_blue"
   | "axe_pink";
 
+
 interface AnimationCanvasProps {
-  character: Character;
-  action: keyof typeof actions;
-  direction?: keyof typeof directions;
-  isAnimating?: boolean;
-  canvasSize?: number;
-  drawWidth?: number;
-  drawHeight?: number;
-  clickCount?: number;
-  style?: React.CSSProperties;
-  axeType?: AxeType;
+  character: Character; // character to animate
+  action: keyof typeof actions; // action for character e.g. "walk" or "axe"
+  direction?: keyof typeof directions; // direction for the animation to play
+  isAnimating?: boolean; // flag to indicate if the animation is playing we can toggle
+  canvasSize?: number; // size of the canvas to draw
+  drawWidth?: number; // within the canvas, how wide to draw the character
+  drawHeight?: number; // within the canvas, how tall to draw the character
+  style?: React.CSSProperties; // style to apply to the canvas
+  axeType?: AxeType; // Not used anymore, but keeping if we want to introduce cosmetics later.
 }
 
 const AnimationPreview: React.FC<AnimationCanvasProps> = ({
@@ -40,13 +41,14 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
   canvasSize = CANVAS_SIZE,
   drawWidth,
   drawHeight,
-  clickCount = 0,
   style,
   axeType = "axe",
 }) => {
+  // Keep a reference to the canvas element
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Get file path for each character layer based on action
+  // Get the file path of the image to render for each layer of the character
+  // Characters have many layers, e.g. body, hair, eyes, etc.
   const getFilePathForLayer = useCallback(
     (layer: keyof typeof characterProperties) => {
       if (!character[layer]) return "";
@@ -63,10 +65,12 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
   );
 
   // Get special file path for the axe/tool
+  // This is kind of redundant now we don't have different colors of axe
   const getToolFilePath = useCallback(() => {
     return `animations/${actions[action].path}/e-tool/${axeType}.png`;
   }, [action, axeType]);
 
+  // Load all of the character images we want to draw on the canvas.
   const { layerImages, toolImage, isLoading } = useCharacterImages(
     character,
     action,
@@ -74,11 +78,12 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
     getToolFilePath
   );
 
+  // Get the current frame of the animation to draw
+  // Each spritesheet has a set number of frames, and we want to animate through them.
   const { currentFrame } = useFrameAnimation(
     action,
     isAnimating,
     isLoading,
-    clickCount
   );
 
   // Draw the animation frame on the canvas
@@ -92,6 +97,7 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
     // Clear the canvas before drawing the new frame
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Layer by layer, draw the character on the canvas for the current frame of the animation.
     drawCharacterLayers(
       ctx,
       canvas,
@@ -116,6 +122,7 @@ const AnimationPreview: React.FC<AnimationCanvasProps> = ({
     drawHeight,
   ]);
 
+  // Render the canvas with the current frame of the animation.
   return (
     <canvas
       ref={canvasRef}

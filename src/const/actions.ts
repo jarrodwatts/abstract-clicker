@@ -1,3 +1,6 @@
+/**
+ * Various animations that characters can perform
+ */
 const actions = {
   pickaxe: {
     name: "pickaxe",

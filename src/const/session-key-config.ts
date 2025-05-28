@@ -9,10 +9,11 @@ import { COOKIE_CLICKER_CONTRACT_ADDRESS } from "./contracts";
 /**
  * Default call policies for session keys
  * Defines which contract functions the session key can call and with what limits
+ * i.e. user can call click, with 1 ETH limit on gas fees, but not spend any money for 30 days.
  */
 export const DEFAULT_CALL_POLICIES = [
   {
-    target: COOKIE_CLICKER_CONTRACT_ADDRESS as `0x${string}`, // NFT contract
+    target: COOKIE_CLICKER_CONTRACT_ADDRESS as `0x${string}`,
     selector: toFunctionSelector("click()"),
     valueLimit: LimitZero,
     maxValuePerUse: BigInt(0),

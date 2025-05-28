@@ -1,6 +1,9 @@
 import characterProperties from "@/const/characterProperties";
 import Character from "@/types/Character";
 
+/**
+ * Generate a random character for the game
+ */
 export default function generateRandomCharacter() {
   const character: Character = {};
 

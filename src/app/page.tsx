@@ -1,13 +1,19 @@
 "use client";
 
+import Image from "next/image";
 import LoginFlow from "@/components/LoginFlow";
 import { DotPattern } from "@/components/DotPattern";
-import Image from "next/image";
 import { useAccount } from "wagmi";
 import { useAbstractSession } from "@/hooks/useAbstractSession";
 import { NumberTicker } from "@/components/magicui/number-ticker";
 import useTotalClicks from "@/hooks/useTotalClicks";
 
+/**
+ * The main page of the app that controls the login flow and the game
+ * General flow is:
+ * 1. Show the login flow
+ * 2. Show the game
+ */
 export default function Home() {
   const { address } = useAccount();
   const { data: session } = useAbstractSession();

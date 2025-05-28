@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
+/**
+ * In the bottom right of the game, there is a button to play the background music.
+ * This is a simple button that toggles the music on and off.
+ * It uses a reference to the audio element to play and pause the music.
+ */
 export default function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);

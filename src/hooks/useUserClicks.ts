@@ -3,6 +3,11 @@ import { useState, useEffect } from "react";
 import getUserClicks from "@/lib/transaction/getUserClicks";
 import { useAccount } from "wagmi";
 
+/**
+ * Hook to read the number of clicks a user has made in the game.
+ * First it reads the on-chain value, then stores it in local state.
+ * From there, it allows for the local click count to be incremented and refreshed.
+ */
 export function useUserClicks() {
   const { address } = useAccount();
   const [localClickCount, setLocalClickCount] = useState<number | undefined>(
