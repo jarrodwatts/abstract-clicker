@@ -114,7 +114,7 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   );
 
   const getToolFilePath = useCallback(() => {
-    if (!actions[actionToUse]) return `animations/walk/e-tool/axe.png`;
+    if (!actions[actionToUse] || actionToUse === "walk") return "";
     // const toolType = actionToUse === "axe" ? selectedAxe : "axe";
     // Always use the default axe visual, as axe selection is no longer a mechanic
     const toolType = "axe";
@@ -361,16 +361,6 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
     wrapperProps.rel = "noopener noreferrer";
     wrapperProps.title = `View Transaction: ${txHash}`;
   }
-
-  const formatTimestamp = (timestamp?: number) => {
-    if (!timestamp) return "N/A";
-    return new Date(timestamp).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-  };
 
   const getStatusIndicator = () => {
     switch (uiState) {

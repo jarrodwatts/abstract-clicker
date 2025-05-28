@@ -32,7 +32,6 @@ export function useCharacterImages(
     }
 
     const loadToolImage = async () => {
-      const image = new Image();
       const src = getToolFilePath();
 
       if (!src) {
@@ -40,6 +39,7 @@ export function useCharacterImages(
         return;
       }
 
+      const image = new Image();
       return new Promise<void>((resolve) => {
         image.src = src;
         image.onload = () => {
