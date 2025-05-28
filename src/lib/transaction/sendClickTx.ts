@@ -1,5 +1,5 @@
 import { COOKIE_CLICKER_CONTRACT_ADDRESS } from "@/const/contracts";
-import { API_URL, chain } from "@/const/chain";
+import { API_URL, chain, IS_PRODUCTION } from "@/const/chain";
 import { Account, http, toFunctionSelector } from "viem";
 import {
   createSessionClient,
@@ -155,7 +155,9 @@ export async function sendRawTransactionWithDetailedOutput(
     body: JSON.stringify({
       jsonrpc: "2.0",
       id: 1,
-      method: "zks_sendRawTransactionWithDetailedOutput",
+      method: IS_PRODUCTION
+        ? "unstable_zks_sendRawTransactionWithDetailedOutput"
+        : "zks_sendRawTransactionWithDetailedOutput",
       params: [signedTransaction],
     }),
   });
