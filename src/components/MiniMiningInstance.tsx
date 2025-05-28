@@ -366,8 +366,9 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
       case "confirmed":
         return <span className="text-xs text-white">Confirmed on-chain.</span>;
       case "failed":
+        console.log("errorMessage", errorMessage);
         return (
-          <span className="text-xs text-red-500">
+          <span className="text-xs text-white">
             Failed{" "}
             {errorMessage && (
               <span className="block text-xxs">({errorMessage})</span>
