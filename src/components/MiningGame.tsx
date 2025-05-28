@@ -362,11 +362,6 @@ export default function MiningGame({
           return;
         }
 
-        console.log(
-          `[AutoClick] Triggered by: ${lumberjack.displayName} (Lumberjack ID: ${lumberjack.lumberjackId}) for click number around ${clickCountRef.current}`,
-          { character: lumberjack.character }
-        );
-
         incrementClickCount();
         const nonceForThisTx = nonceQuery.incrementNonce();
 
