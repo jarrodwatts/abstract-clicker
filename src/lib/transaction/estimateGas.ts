@@ -14,6 +14,8 @@ export default async function estimateGasForClick(address: `0x${string}`) {
     account: address,
   });
 
+  const adjustedGasLimit = (gasLimit * 15n) / 10n;
+
   const { maxFeePerGas, maxPriorityFeePerGas } =
     await publicClient.estimateFeesPerGas();
 
@@ -25,5 +27,5 @@ export default async function estimateGasForClick(address: `0x${string}`) {
 
   console.log({ gasLimit, maxFeePerGas, maxPriorityFeePerGas });
 
-  return { gasLimit, maxFeePerGas, maxPriorityFeePerGas };
+  return { gasLimit: adjustedGasLimit, maxFeePerGas, maxPriorityFeePerGas };
 }
