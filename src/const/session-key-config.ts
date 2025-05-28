@@ -1,5 +1,6 @@
 import {
   LimitType,
+  LimitZero,
   type SessionConfig,
 } from "@abstract-foundation/agw-client/sessions";
 import { parseEther, toFunctionSelector } from "viem";
@@ -13,11 +14,7 @@ export const DEFAULT_CALL_POLICIES = [
   {
     target: COOKIE_CLICKER_CONTRACT_ADDRESS as `0x${string}`, // NFT contract
     selector: toFunctionSelector("click()"),
-    valueLimit: {
-      limitType: LimitType.Unlimited,
-      limit: BigInt(0),
-      period: BigInt(0),
-    },
+    valueLimit: LimitZero,
     maxValuePerUse: BigInt(0),
     constraints: [],
   },
