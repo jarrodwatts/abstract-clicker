@@ -358,6 +358,7 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   }
 
   const getStatusIndicator = () => {
+    console.log("uiState", uiState);
     switch (uiState) {
       case "submitting":
         return <span className="text-xs text-white">Submitting...</span>;
