@@ -7,6 +7,8 @@ import { encrypt } from "./encryptSession";
 import { SESSION_KEY_CONFIG } from "@/const/session-key-config";
 import { AbstractClient } from "@abstract-foundation/agw-client";
 import { publicClient } from "@/const/publicClient";
+import { paymasterFields } from "@/const/chain";
+import { setSessionCreationMode } from "../transaction/sendClickTx";
 
 /**
  * @function createAndStoreSession
@@ -43,6 +45,9 @@ export const createAndStoreSession = async (
   if (!userAddress) return null;
 
   try {
+    // Enable session creation mode
+    setSessionCreationMode(true);
+
     const sessionPrivateKey = generatePrivateKey();
     const sessionSigner = privateKeyToAccount(sessionPrivateKey);
 
@@ -51,6 +56,7 @@ export const createAndStoreSession = async (
         signer: sessionSigner.address,
         ...SESSION_KEY_CONFIG,
       },
+      ...paymasterFields,
     });
 
     if (transactionHash) {
@@ -79,5 +85,8 @@ export const createAndStoreSession = async (
   } catch (error) {
     console.error("Failed to create session:", error);
     throw new Error("Session creation failed");
+  } finally {
+    // Disable session creation mode
+    setSessionCreationMode(false);
   }
 };

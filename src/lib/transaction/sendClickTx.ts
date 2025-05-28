@@ -1,5 +1,5 @@
 import { COOKIE_CLICKER_CONTRACT_ADDRESS } from "@/const/contracts";
-import { API_URL, chain } from "@/const/chain";
+import { API_URL, chain, paymasterFields } from "@/const/chain";
 import { Account, http, toFunctionSelector } from "viem";
 import {
   createSessionClient,
@@ -16,8 +16,21 @@ import { walletClient } from "@/const/walletClient";
 // Store original fetch
 const originalFetch = global.fetch;
 
+// Flag to track if we're in session creation
+let isCreatingSession = false;
+
+// Function to set session creation mode
+export const setSessionCreationMode = (mode: boolean) => {
+  isCreatingSession = mode;
+};
+
 // Override fetch to intercept RPC requests
 global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+  // If we're creating a session, use original fetch
+  if (isCreatingSession) {
+    return originalFetch(input, init);
+  }
+
   if (
     typeof input === "string" &&
     input.includes(chain.rpcUrls.default.http[0])
@@ -103,6 +116,7 @@ export default async function signClickTx(
     gas,
     maxFeePerGas,
     maxPriorityFeePerGas,
+    ...paymasterFields,
   });
 
   // Use the AGW session client to sign the transaction
