@@ -1,4 +1,4 @@
-import { clearStoredSession } from "./clearStoredSession";
+// import { clearStoredSession } from "./clearStoredSession";
 import { abstractTestnet } from "viem/chains";
 import type { AbstractClient } from "@abstract-foundation/agw-client";
 import type { Address } from "viem";
