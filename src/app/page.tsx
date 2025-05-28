@@ -34,7 +34,7 @@ export default function Home() {
       </div>
 
       {!isGameActive && (
-        <div className="relative w-full z-20 flex flex-col items-center flex-grow justify-center md:-mt-[15vh] -mt-12">
+        <div className="relative w-full z-20 flex flex-col items-center flex-grow justify-center -mt-12 md:-mt-0">
           <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-[4px_4px_0_rgba(0,0,0,0.9)] tracking-wide uppercase text-center mb-2 md:mb-4 max-w-3xl mx-auto leading-[1.25] mt-16">
             Realtime Gaming on Abstract
           </h1>
@@ -57,7 +57,7 @@ export default function Home() {
               </div>
             )}
           </div>
-          <div className="w-full max-w-[650px] p-6 border-2 border-[#a86b2d] rounded-2xl shadow-[0_8px_32px_0_rgba(80,40,10,0.35)] bg-[#bfc98a]/60 backdrop-blur-sm text-center">
+          <div className="w-full max-w-[650px] p-1 md:p-6 border-2 border-[#a86b2d] rounded-2xl shadow-[0_8px_32px_0_rgba(80,40,10,0.35)] bg-[#bfc98a]/60 backdrop-blur-sm text-center">
             <LoginFlow />
           </div>
         </div>
