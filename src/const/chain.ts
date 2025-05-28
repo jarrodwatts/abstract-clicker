@@ -1,12 +1,8 @@
-import { abstractTestnet, abstract, Chain } from "viem/chains";
+import { abstractTestnet, abstract } from "viem/chains";
+
+export const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 /**
  * This exports the chain configuration to be used in the application.
  */
-export const chain =
-  process.env.NODE_ENV === "production" ? abstractTestnet : abstractTestnet;
-
-export const VALID_CHAINS: Record<number, Chain> = {
-  [abstractTestnet.id]: abstractTestnet,
-  [abstract.id]: abstract,
-};
+export const chain = IS_PRODUCTION ? abstract : abstractTestnet;

@@ -1,11 +1,13 @@
 import { useReadContract } from "wagmi";
-import { COOKIE_CLICKER_CONTRACT_ABI as cookieClickerABI } from "@/const/contracts";
-import { cookieClickerAddress } from "@/const/addresses";
+import {
+  COOKIE_CLICKER_CONTRACT_ADDRESS,
+  COOKIE_CLICKER_CONTRACT_ABI,
+} from "@/const/contracts";
 
 export default function useTotalClicks() {
   const { data: totalClicks, isLoading } = useReadContract({
-    address: cookieClickerAddress,
-    abi: cookieClickerABI,
+    address: COOKIE_CLICKER_CONTRACT_ADDRESS,
+    abi: COOKIE_CLICKER_CONTRACT_ABI,
     functionName: "totalClicks",
   });
 
