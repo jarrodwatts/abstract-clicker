@@ -1,4 +1,4 @@
-// import { clearStoredSession } from "./clearStoredSession";
+import { clearStoredSession } from "./clearStoredSession";
 import { abstractTestnet } from "viem/chains";
 import type { AbstractClient } from "@abstract-foundation/agw-client";
 import type { Address } from "viem";
@@ -39,9 +39,7 @@ export const validateSession = async (
       (chain === abstractTestnet && status === SessionStatus.NotInitialized);
 
     if (!isValid) {
-      console.log("Session not valid.");
-      console.log({ sessionHash, address, status });
-      // clearStoredSession(address);
+      clearStoredSession(address);
     }
 
     return isValid;

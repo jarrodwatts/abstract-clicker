@@ -6,6 +6,7 @@ import { getEncryptionKey } from "./getEncryptionKey";
 import { encrypt } from "./encryptSession";
 import { SESSION_KEY_CONFIG } from "@/const/session-key-config";
 import { AbstractClient } from "@abstract-foundation/agw-client";
+import { publicClient } from "@/const/publicClient";
 
 /**
  * @function createAndStoreSession
@@ -45,12 +46,21 @@ export const createAndStoreSession = async (
     const sessionPrivateKey = generatePrivateKey();
     const sessionSigner = privateKeyToAccount(sessionPrivateKey);
 
-    const { session } = await abstractClient.createSession({
+    const { session, transactionHash } = await abstractClient.createSession({
       session: {
         signer: sessionSigner.address,
         ...SESSION_KEY_CONFIG,
       },
     });
+
+    if (transactionHash) {
+      // Wait for transaction receipt before invalidating query
+      await publicClient.waitForTransactionReceipt({
+        hash: transactionHash,
+      });
+    } else {
+      throw new Error("Transaction hash is null");
+    }
 
     const sessionData = { session, privateKey: sessionPrivateKey };
     const key = await getEncryptionKey(userAddress);
