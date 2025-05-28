@@ -156,7 +156,7 @@ export async function sendRawTransactionWithDetailedOutput(
       jsonrpc: "2.0",
       id: 1,
       method: IS_PRODUCTION
-        ? "unstable_zks_sendRawTransactionWithDetailedOutput"
+        ? "unstable_sendRawTransactionWithDetailedOutput"
         : "zks_sendRawTransactionWithDetailedOutput",
       params: [signedTransaction],
     }),
