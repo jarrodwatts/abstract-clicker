@@ -92,6 +92,7 @@ interface ActiveMiniGame {
   initialClickCount: number;
   txHash?: `0x${string}`;
   uiState: "submitting" | "optimistic" | "confirmed" | "failed";
+  errorMessage?: string;
   clickTimestamp: number;
   optimisticConfirmTimestamp?: number;
   finalizedTimestamp?: number;
@@ -223,6 +224,7 @@ export default function MiningGame({
               ? {
                   ...g,
                   uiState: "failed",
+                  errorMessage: "Transaction pre-requisites not met.",
                   finalizedTimestamp: Date.now(),
                   isVisuallyRemoving: false,
                 }
@@ -267,14 +269,17 @@ export default function MiningGame({
               : game
           )
         );
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error submitting transaction:", error);
+        const errorMessage =
+          error.message || "Transaction failed for an unknown reason.";
         setActiveMiniGames((prev) =>
           prev.map((g) =>
             g.id === gameId
               ? {
                   ...g,
                   uiState: "failed",
+                  errorMessage: errorMessage,
                   finalizedTimestamp: Date.now(),
                   isVisuallyRemoving: false,
                 }
@@ -403,8 +408,11 @@ export default function MiningGame({
               : game
           )
         );
-      } catch (error) {
+      } catch (error: any) {
         console.error("[AutoClick] Error submitting transaction:", error);
+        const errorMessage =
+          error.message ||
+          "Auto-click transaction failed for an unknown reason.";
         // Attempt to find the gameId. If the error occurred before newMiniGameId was set,
         // this part might not correctly identify the game.
         // However, the most likely place for an error after newMiniGameId is set is signClickTx or UI updates.
@@ -418,6 +426,7 @@ export default function MiningGame({
               ? {
                   ...g,
                   uiState: "failed",
+                  errorMessage: errorMessage, // Store the actual error message
                   finalizedTimestamp: Date.now(),
                   isVisuallyRemoving: false,
                 }

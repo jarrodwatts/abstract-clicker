@@ -49,6 +49,7 @@ interface MiniMiningInstanceProps {
   initialClickCount: number;
   instanceCanvasSize?: number;
   uiState: "submitting" | "optimistic" | "confirmed" | "failed";
+  errorMessage?: string;
   clickTimestamp: number;
   optimisticConfirmTimestamp?: number;
   finalizedTimestamp?: number;
@@ -62,6 +63,7 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   initialClickCount,
   instanceCanvasSize = 64,
   uiState,
+  errorMessage,
   clickTimestamp,
   optimisticConfirmTimestamp,
   finalizedTimestamp,
@@ -73,6 +75,9 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   const animationLoopIdRef = useRef<number | null>(null);
   const [treeScale, setTreeScale] = useState(1);
   const treeAnimationRef = useRef<number | null>(null);
+  let bgColorClass = "bg-transparent";
+  let borderColorClass = "border-transparent";
+  let statusText = "";
 
   const currentActionName =
     uiState === "submitting"
@@ -314,10 +319,6 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
     treeAnimationRef.current = requestAnimationFrame(doAnimate);
   };
 
-  let bgColorClass = "bg-transparent";
-  let borderColorClass = "border-transparent";
-  let statusText = "";
-
   if (uiState === "submitting") {
     bgColorClass = "bg-orange-500/20";
     borderColorClass = "border-orange-500";
@@ -329,15 +330,7 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   } else if (uiState === "confirmed") {
     bgColorClass = "bg-green-600";
     borderColorClass = "border-green-700";
-    const timeToOptimistic =
-      optimisticConfirmTimestamp && clickTimestamp
-        ? ((optimisticConfirmTimestamp - clickTimestamp) / 1000).toFixed(2)
-        : "N/A";
-    const timeToFinalized =
-      finalizedTimestamp && optimisticConfirmTimestamp
-        ? ((finalizedTimestamp - optimisticConfirmTimestamp) / 1000).toFixed(2)
-        : "N/A";
-    statusText = `⏱️ Opt: ${timeToOptimistic}s, ⏱️ Final: ${timeToFinalized}s`;
+    statusText = "Confirmed";
   } else if (uiState === "failed") {
     bgColorClass = "bg-red-600";
     borderColorClass = "border-red-700";
@@ -345,7 +338,9 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   }
 
   const isLinkable =
-    (uiState === "confirmed" || uiState === "failed") &&
+    (uiState === "confirmed" ||
+      uiState === "failed" ||
+      uiState === "optimistic") &&
     !!blockExplorerBaseUrl &&
     !!txHash;
 
@@ -366,6 +361,61 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
     wrapperProps.rel = "noopener noreferrer";
     wrapperProps.title = `View Transaction: ${txHash}`;
   }
+
+  const formatTimestamp = (timestamp?: number) => {
+    if (!timestamp) return "N/A";
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  };
+
+  const getStatusIndicator = () => {
+    switch (uiState) {
+      case "submitting":
+        return <span className="text-xs text-white">Submitting...</span>;
+      case "optimistic":
+        return <span className="text-xs text-white">Preconfirmed.</span>;
+      case "confirmed":
+        return <span className="text-xs text-white">Confirmed on-chain.</span>;
+      case "failed":
+        return (
+          <span className="text-xs text-red-500">
+            Failed{" "}
+            {errorMessage && (
+              <span className="block text-xxs">({errorMessage})</span>
+            )}
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getTimingInfo = () => {
+    if (uiState !== "confirmed") return null;
+
+    const timeToOptimisticMs =
+      optimisticConfirmTimestamp && clickTimestamp
+        ? optimisticConfirmTimestamp - clickTimestamp
+        : null;
+
+    const timeToFinalizedMs =
+      finalizedTimestamp && optimisticConfirmTimestamp
+        ? finalizedTimestamp - optimisticConfirmTimestamp
+        : null;
+
+    return (
+      <div className="flex flex-col text-xs mt-1 text-white">
+        {timeToOptimisticMs !== null && (
+          <p>⏱️ Preconf: {timeToOptimisticMs}ms</p>
+        )}
+        {timeToFinalizedMs !== null && <p>⏱️ Final: {timeToFinalizedMs}ms</p>}
+      </div>
+    );
+  };
 
   return (
     <Tag {...wrapperProps}>
@@ -395,22 +445,49 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
               : "text-gray-700 dark:text-gray-300"
           }`}
         >
-          {statusText}
+          {getStatusIndicator()}
         </p>
         {isLinkable && txHash && (
           <p
-            className="text-xs mt-1 truncate max-w-full break-words"
+            className="text-xs mt-1 truncate max-w-full break-words inline-flex items-center"
             style={{
               color:
-                uiState === "confirmed" || uiState === "failed"
+                uiState === "confirmed" ||
+                uiState === "failed" ||
+                uiState === "optimistic"
                   ? "white"
                   : "inherit",
               opacity: 0.8,
             }}
           >
             Tx: {`${txHash.slice(0, 6)}...${txHash.slice(-4)}`}
+            {isLinkable && (
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="ml-1 opacity-70"
+              >
+                <path
+                  d="M5 11L11 5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M7.5 5H11V8.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
           </p>
         )}
+        {getTimingInfo()}
       </div>
     </Tag>
   );
