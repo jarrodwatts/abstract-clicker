@@ -406,7 +406,7 @@ export default function MiningGame({
               : game
           )
         );
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("[AutoClick] Error submitting transaction:", error);
         const errorMessage =
           (error instanceof Error ? error.message : String(error)) ||
@@ -464,7 +464,6 @@ export default function MiningGame({
       nonceQuery,
       incrementClickCount,
       isTransactionReady,
-      activeMiniGames, // Keeping this in deps as per current user file, though it might be worth re-evaluating later.
     ]
   );
 
