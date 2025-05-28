@@ -426,15 +426,24 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
             ✅
           </span>
         </div>
-      ) : (
+      ) : uiState === "failed" ? (
+        <div
+          style={{ width: instanceCanvasSize, height: instanceCanvasSize }}
+          className="flex items-center justify-center z-10 rounded"
+        >
+          <span className="text-3xl" role="img" aria-label="Failed">
+            ❌
+          </span>
+        </div>
+      ) : uiState === "submitting" || uiState === "optimistic" ? (
         <canvas
           ref={canvasRef}
           width={instanceCanvasSize}
           height={instanceCanvasSize}
-          className={`z-10 rounded ${uiState === "failed" ? "opacity-80" : ""}`}
+          className="z-10 rounded"
           style={{ imageRendering: "pixelated" }}
         />
-      )}
+      ) : null}
       <div className="flex-grow text-xs flex flex-col">
         <p
           className={`font-semibold ${
