@@ -358,7 +358,11 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
   }
 
   const getStatusIndicator = () => {
-    console.log("uiState", uiState);
+    // Unified initial log
+    console.log(
+      `[MiniMiningInstance] getStatusIndicator called. uiState: "${uiState}", errorMessage: "${errorMessage}"`
+    );
+
     switch (uiState) {
       case "submitting":
         return <span className="text-xs text-white">Submitting...</span>;
@@ -367,7 +371,10 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
       case "confirmed":
         return <span className="text-xs text-white">Confirmed on-chain.</span>;
       case "failed":
-        console.log("errorMessage", errorMessage);
+        // Specific log for failed case, to confirm it's entered
+        console.log(
+          `[MiniMiningInstance] getStatusIndicator: In 'failed' case.`
+        );
         return (
           <span className="text-xs text-white">
             Failed{" "}
@@ -377,6 +384,10 @@ const MiniMiningInstance: React.FC<MiniMiningInstanceProps> = ({
           </span>
         );
       default:
+        // Log for default case
+        console.log(
+          `[MiniMiningInstance] getStatusIndicator: Hit default case. uiState: "${uiState}"`
+        );
         return null;
     }
   };

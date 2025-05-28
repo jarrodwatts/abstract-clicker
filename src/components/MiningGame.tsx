@@ -785,6 +785,7 @@ export default function MiningGame({
                   character={game.character}
                   initialClickCount={game.initialClickCount}
                   uiState={game.uiState}
+                  errorMessage={game.errorMessage}
                   clickTimestamp={game.clickTimestamp}
                   optimisticConfirmTimestamp={game.optimisticConfirmTimestamp}
                   finalizedTimestamp={game.finalizedTimestamp}
