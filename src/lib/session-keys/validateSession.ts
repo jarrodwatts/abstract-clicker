@@ -39,7 +39,9 @@ export const validateSession = async (
       (chain === abstractTestnet && status === SessionStatus.NotInitialized);
 
     if (!isValid) {
-      clearStoredSession(address);
+      console.log("Session not valid.");
+      console.log({ sessionHash, address, status });
+      // clearStoredSession(address);
     }
 
     return isValid;
