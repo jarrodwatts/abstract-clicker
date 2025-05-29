@@ -52,6 +52,7 @@ global.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
 
       // This is a check to see if the AGW is deployed or not yet
       // We are optimistically overriding it to assume it's deployed
+      // We can do this since the 1st transaction will be to create a session (which we don't skip this for)
       if (body.method === "eth_getCode") {
         return new Response(
           JSON.stringify({

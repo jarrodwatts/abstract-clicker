@@ -105,7 +105,6 @@ export default function MiningGame({
 }: {
   character?: Character;
 }) {
-
   // Get connected wallet address
   const { address } = useAccount();
 
@@ -118,7 +117,6 @@ export default function MiningGame({
     isLoading: isClicksLoading,
     incrementClickCount,
   } = useUserClicks();
-
 
   // Generate a random character to use throughout the game
   const [character] = useState(
@@ -229,7 +227,6 @@ export default function MiningGame({
   // Submit the "Click" transaction using the user's session key
   const submitOptimisticTransaction = useCallback(
     async (gameId: string, clickerCharacter: Character, nonceForTx: number) => {
-
       // First check to see if fields we need have loaded. If not, we can't submit the transaction.
       if (
         !address ||
@@ -684,7 +681,7 @@ export default function MiningGame({
               <span className="flex items-center gap-1.5">
                 {address ? (
                   <a
-                    href={`${chain.blockExplorers?.default.url}/address/${address}`}
+                    href={`${chain.blockExplorers?.native.url}/address/${address}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center text-[#5a4a1a] opacity-85 underline transition-opacity duration-200 whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] sm:max-w-[180px] md:max-w-[220px] hover:opacity-100 text-xs sm:text-sm"
@@ -817,7 +814,7 @@ export default function MiningGame({
                   clickTimestamp={game.clickTimestamp}
                   optimisticConfirmTimestamp={game.optimisticConfirmTimestamp}
                   finalizedTimestamp={game.finalizedTimestamp}
-                  blockExplorerBaseUrl={chain.blockExplorers?.default.url}
+                  blockExplorerBaseUrl={chain.blockExplorers?.native.url}
                   instanceCanvasSize={64}
                   txHash={game.txHash}
                 />
