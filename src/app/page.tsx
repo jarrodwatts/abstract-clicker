@@ -33,7 +33,7 @@ export default function Home() {
         />
       </div>
 
-      {!isGameActive && (
+      {/* {!isGameActive && (
         <div className="relative w-full z-20 flex flex-col items-center flex-grow justify-center">
           <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-[4px_4px_0_rgba(0,0,0,0.9)] tracking-wide uppercase text-center mb-2 md:mb-4 max-w-3xl mx-auto leading-[1.25] mt-2">
             Realtime Gaming on Abstract
@@ -67,7 +67,21 @@ export default function Home() {
         <div className="flex-grow flex items-center justify-center w-full">
           <LoginFlow />
         </div>
-      )}
+      )} */}
+
+      <div className="relative w-full z-20 flex flex-col items-center flex-grow justify-center">
+        <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-[4px_4px_0_rgba(0,0,0,0.9)] tracking-wide uppercase text-center mb-2 md:mb-4 max-w-3xl mx-auto leading-[1.25] mt-2">
+          Maintenance in Progress
+        </h1>
+        <p className="text-lg md:text-xl text-white font-mono text-center mb-2 lg:mt-2 mt-2 max-w-2xl mx-auto">
+          We're currently performing some maintenance. Please check back soon!
+        </p>
+        {/* <div className="w-full max-w-[600px] p-1 md:p-6 border-2 border-[#a86b2d] rounded-2xl shadow-[0_8px_32px_0_rgba(80,40,10,0.35)] bg-[#bfc98a]/60 backdrop-blur-sm text-center"> */}
+        {/* <div className="flex flex-col items-center gap-4"> */}
+        {/* <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#a86b2d]"></div> */}
+        {/* </div> */}
+        {/* </div> */}
+      </div>
 
       <DotPattern className="[mask-image:radial-gradient(180%_180%_at_center,transparent,white)] z-1 absolute inset-0" />
     </main>
