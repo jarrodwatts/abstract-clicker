@@ -15,8 +15,8 @@ import { useAbstractSession } from "@/hooks/useAbstractSession";
  * 2. Show the game
  */
 export default function Home() {
-  const { address } = useAccount();
-  const { data: session } = useAbstractSession();
+  // const { address } = useAccount();
+  // const { data: session } = useAbstractSession();
   // const { totalClicks, isLoading } = useTotalClicks();
 
   // const isGameActive = address && session;
@@ -74,7 +74,8 @@ export default function Home() {
           Maintenance in Progress
         </h1>
         <p className="text-lg md:text-xl text-white font-mono text-center mb-2 lg:mt-2 mt-2 max-w-2xl mx-auto">
-          We're currently performing some maintenance. Please check back soon!
+          We&apos;re currently performing some maintenance. Please check back
+          soon!
         </p>
         {/* <div className="w-full max-w-[600px] p-1 md:p-6 border-2 border-[#a86b2d] rounded-2xl shadow-[0_8px_32px_0_rgba(80,40,10,0.35)] bg-[#bfc98a]/60 backdrop-blur-sm text-center"> */}
         {/* <div className="flex flex-col items-center gap-4"> */}
