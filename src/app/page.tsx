@@ -3,8 +3,8 @@
 import Image from "next/image";
 // import LoginFlow from "@/components/LoginFlow";
 import { DotPattern } from "@/components/DotPattern";
-import { useAccount } from "wagmi";
-import { useAbstractSession } from "@/hooks/useAbstractSession";
+// import { useAccount } from "wagmi";
+// import { useAbstractSession } from "@/hooks/useAbstractSession";
 // import { NumberTicker } from "@/components/magicui/number-ticker";
 // import useTotalClicks from "@/hooks/useTotalClicks";
 
