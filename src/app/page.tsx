@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import LoginFlow from "@/components/LoginFlow";
+// import LoginFlow from "@/components/LoginFlow";
 import { DotPattern } from "@/components/DotPattern";
 import { useAccount } from "wagmi";
 import { useAbstractSession } from "@/hooks/useAbstractSession";
-import { NumberTicker } from "@/components/magicui/number-ticker";
-import useTotalClicks from "@/hooks/useTotalClicks";
+// import { NumberTicker } from "@/components/magicui/number-ticker";
+// import useTotalClicks from "@/hooks/useTotalClicks";
 
 /**
  * The main page of the app that controls the login flow and the game
@@ -17,9 +17,9 @@ import useTotalClicks from "@/hooks/useTotalClicks";
 export default function Home() {
   const { address } = useAccount();
   const { data: session } = useAbstractSession();
-  const { totalClicks, isLoading } = useTotalClicks();
+  // const { totalClicks, isLoading } = useTotalClicks();
 
-  const isGameActive = address && session;
+  // const isGameActive = address && session;
 
   return (
     <main className="flex flex-col items-center min-h-screen p-4 bg-[#87944d] relative font-[var(--font-press-start-2p)]">
